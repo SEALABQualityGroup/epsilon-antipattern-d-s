@@ -1,5 +1,5 @@
 # MAGICDRAW
-- La licenza di MagicDraw 18.0 si trova nella cartella model/magicdraw (file MagicDraw_18_0_Enterprise_Evaluation_key). L'altra licenza (file MagicDraw_CAMEO_SIMULATION_TOOLKIT_18_0_Evaluation_key) č per il plugin CAMEO SIMULATION TOOLKIT, che aggiunge funzionalitŕ simulative ad un insieme ristretto di UML. Quest'ultima licenza, cosě come il plugin CST, non serve ai fini di questo progetto, ma per sicurezza la inserisco perché MagicDraw potrebbe richiederla.
+La licenza di MagicDraw 18.0 si trova nella cartella model/magicdraw (file MagicDraw_18_0_Enterprise_Evaluation_key). L'altra licenza (file MagicDraw_CAMEO_SIMULATION_TOOLKIT_18_0_Evaluation_key) č per il plugin CAMEO SIMULATION TOOLKIT, che aggiunge funzionalitŕ simulative ad un insieme ristretto di UML. Quest'ultima licenza, cosě come il plugin CST, non serve ai fini di questo progetto, ma per sicurezza la inserisco perché MagicDraw potrebbe richiederla.
 
 # RUN CONFIGURATION 
 ## (dopo aver importato il progetto in Eclipse)
