@@ -12,9 +12,9 @@ Una volta runnato il file evl sul modello di esempio (il cui file .mdzip rappres
 
 # CONVENZIONI DI MODELLAZIONE
 - 3 views: Static, Dynamic, Deployment
-- STATIC: contiene Components aventi Operations, Usages ed InterfaceRealizations. dunque vi sono Interfaces, che a loro volta contengono Operations.
-- DYNAMIC: contiene UseCases aventi Interactions che a loro volta contengono un qualsiasi costrutto UML, conformemente al metamodello UML stesso (es. Fragments, Messages). N.B.: questa parte č "rognosa", in quanto per ogni Message non esiste solo un elemento Message, ma anche le corrispondenti MessageOccurrenceSpecifications. Praticamente, considera che quando ti servirŕ un Message, sarai di fatto costretto a guardare le MessageOccurrenceSpecifications. 
-- DEPLOYMENT: contiene Nodes su cui sono deployati Artifacts che manifestano Components. Esiste dunque questo "livello intermedio" che passa per gli Artifacts (vedi evl d'esempio). 
+-**STATIC: contiene Components aventi Operations, Usages ed InterfaceRealizations. dunque vi sono Interfaces, che a loro volta contengono Operations.
+-**DYNAMIC: contiene UseCases aventi Interactions che a loro volta contengono un qualsiasi costrutto UML, conformemente al metamodello UML stesso (es. Fragments, Messages). N.B.: questa parte č "rognosa", in quanto per ogni Message non esiste solo un elemento Message, ma anche le corrispondenti MessageOccurrenceSpecifications. Praticamente, considera che quando ti servirŕ un Message, sarai di fatto costretto a guardare le MessageOccurrenceSpecifications. 
+-**DEPLOYMENT: contiene Nodes su cui sono deployati Artifacts che manifestano Components. Esiste dunque questo "livello intermedio" che passa per gli Artifacts (vedi evl d'esempio). 
 
 # PAPERS ALLEGATI (cartella docs/papers)
 - "Chap2-ArcelliPhDThesis (PerfAntipatterns)": č il secondo capitolo della mia tesi, in cui descrivo alcuni antipattern di riferimento. Fra questi, ne dobbiamo "pescare" alcuni (magari tutti :-) ) su cui lavorare
