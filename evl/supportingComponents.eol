@@ -1,0 +1,92 @@
+operation Component getManifestingArtifacts() : Sequence(Artifact) {
+	--System.user.inform(Artifact.allInstances->select(a | a.manifestation->size() > 0)
+	--											->select(a | a.manifestation.supplier->exists(s | s->first().name == self.name))->collect(a | a.name)->asString());
+	return 			 Artifact.allInstances->select(a | a.manifestation->size() > 0)
+												->select(a | a.manifestation.supplier->exists(s | s->first().name == self.name));
+}
+
+operation Component getManifestingArtifact() : Artifact {
+	--System.user.inform(Artifact.allInstances->select(a | a.manifestation->size() > 0)
+	--											->select(a | a.manifestation.supplier->exists(s | s->first().name == self.name))->first().name->asString());
+	return 			 Artifact.allInstances->select(a | a.manifestation->size() > 0)
+												->select(a | a.manifestation.supplier->exists(s | s->first().name == self.name))->first();
+	
+}
+
+operation Component isSupplier(c : Component) : Boolean {
+	var selfProvided := self.getProvidedInterfaces();
+	var cUsed := c.getUsedInterfaces();
+	return cUsed->exists(u | selfProvided->includes(u));
+}
+
+operation Component isClient(c : Component) : Boolean {
+	var selfUsed := self.getUsedInterfaces();
+	var cProvided := c.getProvidedInterfaces();
+	return cProvided->exists(p | selfUsed->includes(p));
+}
+
+operation Component getUsedInterfaces() : Sequence(Usage) {
+	return self.getUsages()->collect(cd | cd.supplier->first())->asSequence();
+}
+
+operation Component getUsages() : Sequence(Usage) {
+	return self.clientDependency->select(cd | cd.isTypeOf(Usage))->asSequence();
+}
+
+operation Component getClientNeighbours() : Sequence(Component) {
+	var otherComponents : Sequence(Component) := Component.allInstances->excluding(self);
+	return otherComponents->select(c | c.isClient(self))->asSequence();
+}
+
+operation Component getSupplierNeighbours() : Sequence(Component) {
+	var otherComponents : Sequence(Component) := Component.allInstances->excluding(self);
+	return otherComponents->select(c | c.isSupplier(self))->asSequence();
+}
+
+operation Component numConnectionsAsSupplier(c : Component) : Real {
+	if (not self.isSupplier(c)) 
+		return 0.0;
+	else
+	{
+		var selfProvided := self.getProvidedInterfaces();
+		var cUsed := c.getUsedInterfaces();
+		return selfProvided->select(u | cUsed->includes(u))->size();
+	}
+}
+
+operation Component numConnectionsAsClient(c : Component) : Real {
+	if (not self.isClient(c)) 
+		return 0.0;
+	else
+	{
+		var selfUsed := self.getUsedInterfaces();
+		var cProvided := c.getProvidedInterfaces();
+		return selfUsed->select(u | cProvided->includes(u))->size();
+	}
+}
+
+operation Component getClientNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects : Real) : Sequence(Component) {
+	var clientNeighbours : Sequence(Component) := self.getClientNeighbours();
+	var neighbours := clientNeighbours->select(n | n.numConnectionsAsClient(self) >= Th_maxConnects)->asSequence();
+	return neighbours;
+}
+
+operation Component getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects : Real) : Sequence(Component) {
+	var supplierNeighbours : Sequence(Component) := self.getSupplierNeighbours();
+	var neighbours := supplierNeighbours->select(n | n.numConnectionsAsSupplier(self) >= Th_maxConnects)->asSequence();
+	return neighbours;
+}
+
+operation Component getDeployNode() : Node {
+	var nodes := Node.allInstances->select(n | n.hasStereotype('GaExecHost'));
+	var artifact := self.getManifestingArtifact();
+	--System.user.inform(self.name + ' Manifesting Artifact: ' + artifact.name->asString());	
+	var selfDeployment : Deployment := Deployment.allInstances->select(d | d.deployedArtifact->first().name == artifact.name)->first();
+	return nodes->select(n | n.deployment->includes(selfDeployment))->first();
+}
+
+operation Component getTotalDemand() : Real {
+	var totalDemand : Real = Operation.allInstances->select(o | o.owner.name == self.name and o.hasStereotype('GaAcqStep'))->collect(o | o.getValue(o.getStereotype('GaAcqStep'), 'resUnits')->asReal())->sum();
+	--System.user.inform('Component ' + self.name + ' Total Demand: ' + totalDemand);
+	return totalDemand;
+}

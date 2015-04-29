@@ -1,0 +1,151 @@
+//clone una interface realization
+operation InterfaceRealization cloneInterfaceRealization() : InterfaceRealization {
+	var newRealization : InterfaceRealization = new InterfaceRealization;
+	newRealization.name = self.name;
+	newRealization.client = self.client;
+	newRealization.supplier = self.supplier;
+	newRealization.contract = self.contract;
+	
+	return newRealization;
+}
+
+//clone una operation
+operation Operation cloneOperationInto(component : Component) : Operation{
+	var newOperation = new Operation;
+	newOperation.name = self.name + "_Cloned";
+	
+	component.ownedOperation.add(newOperation);
+	
+	newOperation.cloneOwnedParameterFrom(self);
+	
+	newOperation.cloneAppliedStereotypesFrom(self);
+	
+	newOperation.cloneReturnTypeFrom(self);
+	
+	return newOperation;
+}
+
+//clone owned parameter
+operation Operation cloneOwnedParameterFrom(op : Operation){
+	self.ownedParameter = op.ownedParameter.clone();
+}
+
+//clone i parametri di un operazione
+operation Operation cloneReturnTypeFrom(op : Operation){
+	if(op.getType().isDefined())
+		self.setType(op.getType());
+}
+
+//recupero la lista dei process node che hanno un legame con l'operazione
+operation Operation getProcessNodes() : List(Node){
+	var returnValue : List(Node) = new List(Node);
+	
+	for(node in Node.allInstances){
+		for(deployment in node.deployment){
+			var listOfArtifacts = deployment.deployedArtifact;
+			for(art in listOfArtifacts){
+					if( art.hasRepresentationOf(self.class) ){
+						returnValue.add(node);
+					}
+				}
+			}
+	}
+	return returnValue;
+}
+
+//recupero gli UseCase relativi all'operazione
+operation Operation getUseCases() : List(UseCase){
+	var returnValue : List(UseCase) = new List(UseCase);
+	
+	for(interaction in Interaction.allInstances){
+		if( interaction.hasOperation(self) ){
+			returnValue.add(interaction.namespace);
+		}
+	}
+	return returnValue;
+}
+
+//splitta il componente
+operation Operation splitComponent() : Component{
+	
+	var selfComponent = self.class; //recupero il componente che possiede l'operazione critica
+	var selfPackage = self.getNearestPackage(); //recupero il package contenitore dell'operazione critica
+	
+	var splittedComponent = new Component; //creo il componente splittato
+	splittedComponent.name = self.class.name + " Splitted";
+	selfPackage.addElement(splittedComponent); //aggiungo il componente splittato al package del componente sorgente
+	splittedComponent.cloneAppliedStereotypesFrom(selfComponent); //clono gli stessi stereotipi del componente sorgente
+	
+	var listOfUsedProvidedInterfaces : List(Interface) = selfComponent.getAllUsedIntefacesProvidedsBy(self);
+		
+	//sposto le interface realization delle interfacce della listOfUsedProvidedInterfaces 
+	//nel nuovo componente
+	var selfComponentListOfInterfaceRealizations : List(Interface) = selfComponent.getInterfaceRealizations();
+	for(intRealization in selfComponentListOfInterfaceRealizations){
+		for(interface in listOfUsedProvidedInterfaces){
+			if(interface == intRealization.getContract() ){
+				splittedComponent.moveInterfaceRealizations(intRealization);
+			}
+		}
+	}
+	
+	var listOfUsedProvidedInterfaces : List(Interface) = selfComponent.getAllUsedIntefacesRequiredsBy(self);
+	
+	/*
+		DEPLOY
+	*/
+	
+	var sequenceOfArtifacts = selfComponent.getAllArtifacts();
+	
+	var listOfNode : List(Node) = new List(Node);
+	
+	for (artifact in sequenceOfArtifacts){
+		for(node in Node.allInstances){
+			if( node.hasDeployment(artifact) ){
+				listOfNode.add(node);
+			}
+		}
+	}
+	
+	for(node in listOfNode){
+		var newNode : Node = new Node;
+		var listOfLinkedNode = node.getOwnedLink();
+		var packageContainer : Package = node.getNearestPackage();
+		newNode.name = node.name+" Splitted";
+		packageContainer.addElement(newNode);
+
+		newNode.cloneAppliedStereotypesFrom(node);
+		newNode.cloneDeployedArtifactFrom(node);
+		newNode.cloneLink(listOfLinkedNode, packageContainer);		
+	}
+	
+	return splittedComponent;
+}
+
+//recupero tutti i message dell'operazione
+operation Operation getAllOwnMessages() : List(Message){
+	var returnValue : List(Message) = new List(Message);
+	
+	for(message in Message.allInstances){
+		if(message.signature == self){
+			returnValue.add(message);
+		}
+	}
+	return returnValue;
+}
+
+//recupero tutti gli interaction che contengono l'op critica
+operation Operation getAllInteractions() : List(Interaction){
+	var returnValue : List(Interaction) = new List(Interaction);
+	
+	for(interaction in Interaction.allInstances){
+		for(message in self.getAllOwnMessages()){
+			if(message.namespace == interaction){
+				returnValue.add(interaction);
+				break;
+			}
+		}
+	}
+	
+	return returnValue;
+}

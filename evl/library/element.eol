@@ -1,0 +1,35 @@
+/*
+	ci sono dei problemi con lo stereotipo "RtUnit" per adesso viene solamente applicato e non vengono
+	clonati i valori degli attributi.
+	In particolare da problemi l'attributo "queueSchedPolicy"
+*/
+//clone gli stereotipi
+operation Element cloneAppliedStereotypesFrom(element : Element) {
+	for(stereotype in element.getAppliedStereotypes()){
+		self.applyStereotype(stereotype);
+		if(stereotype.name <> "RtUnit") 
+			self.setAttributeValueFrom(stereotype, element);
+	}
+}
+
+//clone gli attributi interni dello stereotipo
+operation Element setAttributeValueFrom(stereotype : Stereotype, element : Element){
+	var stereotypeAttr = stereotype.getAttributes();
+	for(attr in stereotypeAttr){
+		if(attr.name <> "base_Element" and attr.name <> "base_NamedElement")
+		{ 
+			var attrValue = element.getValue(stereotype, attr.name);
+			if(attrValue.isDefined()){
+				self.setValue(stereotype, attr.name, attrValue);
+			}
+		}
+	}	
+}
+
+operation Element hasStereotype(stereotypeName : String) : Boolean {
+	return self.getAppliedStereotypes()->exists(s | s.name = stereotypeName);
+}
+
+operation Element getStereotype(stereotypeName : String) : Stereotype {
+	return self.getAppliedStereotypes()->select(s | s.name = stereotypeName)->first();
+}

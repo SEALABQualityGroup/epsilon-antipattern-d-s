@@ -1,0 +1,6 @@
+operation Manifestation hasUtilizedElement(component : Component) : Boolean{
+	if(self.utilizedElement == component){
+		return true;
+	}
+	return false;
+}

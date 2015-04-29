@@ -1,0 +1,136 @@
+operation Artifact manifestsComponents() : Boolean {
+	return Component.allInstances->exists(c | self.manifestation->collect(m | m.supplier)->flatten()->includes(c));
+}
+
+operation Artifact getManifestedComponents() : Sequence(Component) {
+	return Component.allInstances->select(c | self.manifestation->collect(m | m.supplier)->flatten()->includes(c));
+}
+
+
+//WARNING manifestation->first() is not defined
+operation Artifact getManifestedComponent() : Component {
+	//if(self.manifestation->first().isDefined())
+		return Component.allInstances->select(c | self.manifestation->first().utilizedElement == c)->first();
+}
+//WARNING
+
+operation Artifact isSupplier(a : Artifact) : Boolean {
+	var component1 := self.getManifestedComponent();
+	var component2 := a.getManifestedComponent();
+	if(component1.isDefined() and component2.isDefined()) {
+		var selfProvided := component1.getProvidedInterfaces();
+		var cUsed := component2.getUsedInterfaces();
+		return cUsed->exists(u | selfProvided->includes(u));
+	}
+	return false;
+}
+
+operation Artifact isClient(a : Artifact) : Boolean {
+	var component1 := self.getManifestedComponent();
+	var component2 := a.getManifestedComponent();
+	if(component1.isDefined() and component2.isDefined()) {
+		var selfUsed := component1.getUsedInterfaces();
+		var cProvided := component2.getProvidedInterfaces();
+		return cProvided->exists(p | selfUsed->includes(p));
+	}
+	return false;
+}
+
+operation Artifact getUsedInterfaces() : Sequence(Usage) {
+	var component := self.getManifestedComponent();
+	return component.getUsages()->collect(cd | cd.supplier->first())->asSequence();
+}
+
+operation Artifact getProvidedInterfaces() : Sequence(InterfaceRealization) {
+	var component := self.getManifestedComponent();
+	if(component->isDefined())
+		return component.getInterfaceRealizations()->collect(cd | cd.supplier->first())->asSequence();
+	return new Sequence();
+}
+
+operation Artifact getUsages() : Sequence(Usage) {
+	var component := self.getManifestedComponent();
+	return component.clientDependency->select(cd | cd.isTypeOf(Usage))->asSequence();
+}
+
+operation Artifact getInterfaceRealizations() : Sequence(InterfaceRealization) {
+	var component := self.getManifestedComponent();
+	return component.clientDependency->select(cd | cd.isTypeOf(InterfaceRealization))->asSequence();
+}
+
+operation Artifact getClientNeighbours() : Sequence(Artifact) {
+	var component := self.getManifestedComponent();
+	var otherArtifacts : Sequence(Artifact) := Artifact.allInstances->excluding(self);
+	return otherArtifacts->select(a | a.isClient(self))->asSequence();
+}
+
+operation Artifact getSupplierNeighbours() : Sequence(Artifact) {
+	var component := self.getManifestedComponent();
+	var otherArtifacts : Sequence(Artifact) := Artifact.allInstances->excluding(self);
+	return otherArtifacts->select(a | a.isSupplier(self))->asSequence();
+}
+
+operation Artifact numConnectionsAsClient(a : Artifact) : Real {
+	if (not self.isClient(a)) 
+		return 0.0;
+	else
+	{
+		var selfUsed := self.getUsedInterfaces();
+		var cProvided := a.getProvidedInterfaces();
+		return selfUsed->select(u | cProvided->includes(u))->size();
+	}
+}
+
+operation Artifact numConnectionsAsSupplier(a : Artifact) : Real {
+	if (not self.isSupplier(a)) 
+		return 0.0;
+	else
+	{
+		var selfProvided := self.getProvidedInterfaces();
+		var cUsed := a.getUsedInterfaces();
+		return selfProvided->select(u | cUsed->includes(u))->size();
+	}
+}
+
+operation Artifact getClientNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects : Real) : Sequence(Artifact) {
+	var clientNeighbours : Sequence(Artifact) := self.getClientNeighbours();
+	var neighbours := clientNeighbours->select(n | n.numConnectionsAsClient(self) >= Th_maxConnects)->asSequence();
+	return neighbours;
+}
+
+operation Artifact getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects : Real) : Sequence(Artifact) {
+	var supplierNeighbours : Sequence(Artifact) := self.getSupplierNeighbours();
+	var neighbours := supplierNeighbours->select(n | n.numConnectionsAsSupplier(self) >= Th_maxConnects)->asSequence();
+	return neighbours;
+}
+
+operation Artifact getDeployNode() : Node {
+	var artifact = self;
+	var nodes := Node.allInstances->select(n | n.hasStereotype('GaExecHost'));	
+	var selfDeployment : Deployment := Deployment.allInstances->select(d | d.deployedArtifact->first().name == artifact.name)->first();
+	return nodes->select(n | n.deployment->includes(selfDeployment))->first();
+}
+
+operation Artifact getTotalDemand() : Real {
+	var totalDemand : Real = Operation.allInstances->select(o | o.owner.name == self.getManifestedComponent().name and o.hasStereotype('GaAcqStep'))
+			->collect(o | o.getValue(o.getStereotype('GaAcqStep'), 'resUnits')->asReal())->sum();
+	--System.user.inform('Component ' + self.name + ' Total Demand: ' + totalDemand);
+	return totalDemand;
+}
+
+operation Artifact clone() {
+	var deploymentView := Package.allInstances->select(v | v.name == 'deploymentView' 
+		or v.name == 'DeploymentView' 
+			or v.name == 'deployment' 
+				or v.name == 'Deployment')->first();
+	var copy : Artifact := new Artifact;
+	copy.name = self.name + '_clone';
+	copy.manifestation = self.manifestation.clone();
+	deploymentView.packagedElement.add(copy);
+	return copy;
+}
+
+operation Manifestation clone() {
+	var copy : Manifestation := new Manifestation;
+	copy.utilizedElement = self.utilizedElement;
+}

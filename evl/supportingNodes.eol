@@ -1,0 +1,235 @@
+operation Node getNodeNeighbours() : Sequence(Node) {
+	var selfNetworkLinks : Sequence(Node) := self.getNetworkLinks();
+	--System.user.inform('Node ' + self.name + ' Network Links: ' + selfNetworkLinks->collect(nl | nl.name)->asString());
+	var nodes := Node.allInstances->select(n | n.hasStereotype('GaExecHost'))->excluding(self);
+	--System.user.inform('Node ' + self.name + ' Neighbours: ' + nodes->select(n | selfNetworkLinks->exists(nl | n.getNetworkLinks()->includes(nl)))->collect(n | n.name)->asString());
+	nodes->select(n | selfNetworkLinks->exists(nl | n.getNetworkLinks()->includes(nl)));
+	return nodes;
+}
+
+operation Node getNetworkLinks() : Sequence(Node) {
+	var networkLinks := Node.allInstances->select(n | n.hasStereotype('GaCommHost'));
+	--System.user.inform('All NetworkLinks: ' + networkLinks->collect(nl | nl.name)->asString());
+	--System.user.inform('CommunicationPath ' + CommunicationPath.allInstances->first().name + ' - MemberEnds: ' + 
+	--										CommunicationPath.allInstances->first().memberEnd->collect(me | me.owner.name)->asString());
+	var selfCommunicationPaths := CommunicationPath.allInstances->select(cp | cp.memberEnd->collect(me | me.owner)->includes(self));
+	--System.user.inform('CommunicationPaths involving ' + self.name + ': ' + selfCommunicationPaths->collect(cp | cp.name)->asString());
+		
+	var otherEnds := selfCommunicationPaths->collect(cp | cp.memberEnd.owner)->flatten()->excluding(self);
+	--System.user.inform('Node ' + self.name + ' Other Ends: ' + otherEnds->collect(me | me.name)->asString());
+	
+	var selfNetworkLinks := networkLinks->select(nl | otherEnds->includes(nl));
+	--System.user.inform('Node ' + self.name + ' Network Links: ' + selfNetworkLinks->collect(nl | nl.name)->asString());
+	
+	return selfNetworkLinks;
+}
+
+operation Node hasCriticalComponent() : Boolean {
+	var deployedComponents := self.getDeployedComponents();
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployed Components: ' + deployedComponents->collect(c | c.name).getSequenceString());
+	if(deployedComponents.isDefined()) {
+		if(deployedComponents->notEmpty()) {
+			deployedComponents := deployedComponents->select(c | c.getTotalDemand() > 0);
+			return deployedComponents->exists(c1 | c1.hasStereotype('PaRunTInstance') and 
+												   not deployedComponents->excluding(c1)
+												   	->exists(c2 | c2.hasStereotype('PaRunTInstance') and c2.getTotalDemand() > c1.getTotalDemand()));
+		} else
+			return false;
+	} else
+		return false;
+}
+
+operation Node hasCriticalArtifact() : Boolean {
+	var deployedArtifacts := self.getDeployedArtifacts();
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployed Artifacts: ' + deployedArtifacts->collect(c | c.name).getSequenceString());
+	if(deployedArtifacts.isDefined()) {
+		if(deployedArtifacts->notEmpty()) {
+			deployedArtifacts := deployedArtifacts->select(a | a.getTotalDemand() > 0);
+			return deployedArtifacts->exists(a1 | a1.getManifestedComponent().hasStereotype('PaRunTInstance') and 
+												   not deployedArtifacts->excluding(a1)
+												   	->exists(a2 | a1getManifestedCompoennt().hasStereotype('PaRunTInstance') and a2.getTotalDemand() > a1.getTotalDemand()));
+		} else
+			return false;
+	} else
+		return false;
+}
+
+operation Node getCriticalComponent() : Component {
+	if(self.hasCriticalComponent()) {
+		var deployedComponents := self.getDeployedComponents();
+		--System.user.inform('Node ' + self.name + 
+		--'\nDeployed Components: ' + deployedComponents->collect(c | c.name).getSequenceString());
+		return deployedComponents->select(c | c.getTotalDemand() > 0)
+									->select(c1 | c1.hasStereotype('PaRunTInstance') and 
+												  not deployedComponents->excluding(c1)
+												  	->exists(c2 | c2.hasStereotype('PaRunTInstance') and c2.getTotalDemand() > c1.getTotalDemand()))->first();
+	} else
+		 return null;
+	
+}
+
+operation Node getCriticalArtifact() : Artifact {
+	if(self.hasCriticalArtifact()) {
+		var deployedArtifacts := self.getDeployedArtifacts();
+		--System.user.inform('Node ' + self.name + 
+		--'\nDeployed Artifacts: ' + deployedArtifacts->collect(c | c.name).getSequenceString());
+		return deployedArtifacts->select(a | a.getTotalDemand() > 0)
+									->select(a1 | a1.getManifestedComponent().hasStereotype('PaRunTInstance') and 
+												  not deployedArtifacts->excluding(a1)
+												  	->exists(a2 | a2.hasStereotype('PaRunTInstance') and a2.getTotalDemand() > c1.getTotalDemand()))->first();
+	} else
+		 return null;
+	
+}
+
+operation Node getDeployedComponents() : Sequence(Component) {
+	var selfDeployments : Sequence(Deployment) := Deployment.allInstances->select(d | d.owner == self);
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployments: ' + selfDeployments.getSequenceString());
+	var components := Component.allInstances->select(c | c.hasStereotype('PaRunTInstance'));
+	--System.user.inform('Node ' + self.name + 
+	--			'\nComponents: ' + components->collect(c | c.name).getSequenceString());
+	var artifacts := components->collect(c | c.getManifestingArtifacts())->flatten();	
+	--System.user.inform('Node ' + self.name + 
+	--			'\nArtifacts: ' + artifacts->collect(c | c.name).getSequenceString());
+	--var deployedArtifacts := artifacts->select(a | selfDeployments->collect(d | d.deployedArtifact->first())->includes(a));
+	var deployedArtifacts := artifacts->select(a | selfDeployments->collect(d | d.deployedArtifact->first())->includes(a));
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployed Artifacts: ' + deployedArtifacts->collect(c | c.name).getSequenceString());
+	var deployedComponents : Sequence(Component) := deployedArtifacts->collect(a | a.getManifestedComponent());
+	--if(deployedComponents->notEmpty())
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployed Components: ' + deployedComponents->collect(c | c.type.name + ' ' + c.name).getSequenceString());
+	return deployedComponents;
+}
+
+operation Node getDeployedArtifacts() : Sequence(Artifact) {
+	var selfDeployments : Sequence(Deployment) := Deployment.allInstances->select(d | d.owner == self);
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployments: ' + selfDeployments.getSequenceString());
+	var components := Component.allInstances->select(c | c.hasStereotype('PaRunTInstance'));
+	--System.user.inform('Node ' + self.name + 
+	--			'\nComponents: ' + components->collect(c | c.name).getSequenceString());
+	var artifacts := components->collect(c | c.getManifestingArtifacts())->flatten();	
+	--System.user.inform('Node ' + self.name + 
+	--			'\nArtifacts: ' + artifacts->collect(c | c.name).getSequenceString());
+	--var deployedArtifacts := artifacts->select(a | selfDeployments->collect(d | d.deployedArtifact->first())->includes(a));
+	var deployedArtifacts := artifacts->select(a | selfDeployments->collect(d | d.deployedArtifact->first())->includes(a));
+	--System.user.inform('Node ' + self.name + 
+	--			'\nDeployed Artifacts: ' + deployedArtifacts->collect(c | c.name).getSequenceString());
+	return deployedArtifacts;
+}
+
+operation Node getUnbalancedNodes() : Sequence(Node) {
+	var Th_maxHwUtil : Real := 0.7;
+	var Th_minHwUtil : Real := 0.3;
+	var selfUtil : Real := 0.0;	
+	var selfNeighboursWithLowUtil := Sequence{};
+	if (self.hasStereotype('GaExecHost') and self.hasValue(self.getStereotype('GaExecHost'), 'utilization')) 
+			selfUtil := self.getValue(self.getStereotype('GaExecHost'), 'utilization')->first().asReal();
+	var selfNeighbours := self.getNodeNeighbours();
+	--System.user.inform('Node ' + self.name + ' Neighbours: ' + selfNeighbours->collect(n | n.name)->asString());
+	if(selfUtil >= Th_maxHwUtil) {			
+		selfNeighboursWithLowUtil := selfNeighbours->select(n | n.hasValue(n.getStereotype('GaExecHost'), 'utilization') and
+											     			n.getValue(n.getStereotype('GaExecHost'), 'utilization')->first().asReal() < Th_minHwUtil);
+	}
+	else {
+		selfNeighboursWithLowUtil := selfNeighbours->select(n | n.hasValue(n.getStereotype('GaExecHost'), 'utilization') and
+											     			n.getValue(n.getStereotype('GaExecHost'), 'utilization')->first().asReal() >= Th_minHwUtil);
+	}
+	return selfNeighboursWithLowUtil;
+}
+
+operation Sequence(Node) getLessUsedNode() : Node {
+	return self->select(n | n.hasStereotype('GaExecHost') and n.hasValue(n.getStereotype('GaExecHost'), 'utilization'))
+				->sortBy(n | n.getValue(n.getStereotype('GaExecHost'), 'utilization'))->first();
+}
+
+operation Node clone() : Node {
+	var copy : Node := new Node;
+	copy.name = self.name + '_clone';
+	var deploymentView := Package.allInstances->select(v | v.name == 'deploymentView' or v.name == 'DeploymentView' or v.name == 'deployment' or v.name == 'Deployment')->first();
+	deploymentView.packagedElement.add(copy);
+	var selfCommunicationPaths := CommunicationPath.allInstances->select(cp | cp.memberEnd->collect(me | me.owner)->includes(self));
+	--System.user.inform('CommunicationPaths involving ' + self.name + ': ' + selfCommunicationPaths->collect(cp | cp.name)->asString());
+	if(selfCommunicationPaths.isDefined()) {		
+		var selfLinks := self.getNetworkLinks();
+		var copyCommunicationPaths := copy.createCommunicationPaths(selfLinks);
+		--System.user.inform('Node ' + self.name + 
+		--	'\nCopy CommunicationPaths memberEnds after add: ' + copyCommunicationPaths->collect(cc | cc.memberEnd.owner)->flatten()->asString());
+	}
+	var selfStereotypes := self.getAppliedStereotypes();
+	--System.user.inform('selfStereotypes: ' + selfStereotypes->asString());
+	for(s in selfStereotypes) {
+		copy.applyStereotype(s);
+	}
+	return copy;
+}
+
+operation Node createCommunicationPaths(links : Sequence(Node)) : Sequence(CommunicationPath) {
+	--System.user.inform('Node ' + self.name + ' Links to add: ' + links->collect(n | n.name)->asString());
+	var created := new Sequence(CommunicationPath);
+	if(links.isDefined() and links->notEmpty()) {
+		links->forAll(neigh | created.add(self.createCommunicationPath(neigh)));
+	}
+	return created;
+}
+
+operation Node createCommunicationPath(n : Node) : CommunicationPath {
+	var created : CommunicationPath := new CommunicationPath;
+	if(n.isDefined()) {
+		created.name = self.name + '-' + n.name;
+		var newMember : Property := new Property;
+		newMember.visibility = VisibilityKind#private;
+		newMember.name = created.name + '-conn';
+		newMember.type = n;
+		newMember.association = created;
+		self.ownedAttribute.add(newMember);
+	}
+	var deploymentView := Package.allInstances->select(v | v.name == 'deploymentView' or v.name == 'DeploymentView' or v.name == 'deployment' or v.name == 'Deployment')->first();
+	deploymentView.packagedElement.add(created);
+	return created;
+}
+
+operation CommunicationPath addProperty(n : Node) : Property {
+	var memberEndToAdd : Property := new Property;
+	memberEndToAdd.owner = n;
+	self.memberEnd.add(me);
+	return self;
+}
+
+operation CommunicationPath addMemberEnd(n : Node) : CommunicationPath {
+	var memberEndToAdd : Property := new Property;
+	memberEndToAdd.owner = n;
+	self.memberEnd.add(me);
+	return self;
+}
+
+operation CommunicationPath clone() : CommunicationPath {
+	var deploymentView := Package.allInstances->select(v | v.name == 'deploymentView' or v.name == 'DeploymentView' or v.name == 'deployment' or v.name == 'Deployment')->first();
+	var copy : CommunicationPath := new CommunicationPath;
+	copy.name = self.name + '_clone';
+	copy.memberEnd = self.getMemberEnds();
+	deploymentView.packagedElement.add(copy);
+	return copy;
+}
+
+operation CommunicationPath getMemberEnds() : Sequence(Element) {
+	return self.memberEnd->asSequence();
+}
+
+operation CommunicationPath removeMemberEndIncluding(n : Node) {
+	--System.user.inform('Node ' + self.name + 
+	--		'\nHas CommunicationPath ' + self.name + ' a memberEnd including ' + n.name + '? ' + self.memberEnd->collect(me | me.owner)->includes(n));
+	if(self.memberEnd->collect(me | me.owner)->flatten()->includes(n))
+		self.memberEnd->collect(me | me.owner)->flatten()->remove(me | me.owner->includes(n));
+	return self;
+}
+
+operation Property clone() : Property {
+	var copy : Property := new Property;
+	copy.name = self.name;
+	copy.association = self.association;
+}

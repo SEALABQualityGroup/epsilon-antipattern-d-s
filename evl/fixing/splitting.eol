@@ -1,0 +1,57 @@
+operation Operation splitting(numberOfSplitting : Integer, percentage : Integer) : Boolean{
+	var turnback : Boolean = false;
+	
+	var message = "fai la scelta: 0- splitto il componente con l'operazione critica; 1- splitto l'operazione critica";
+	var caseValue = UserInput.promptInteger(message, 0);
+	
+	switch (caseValue) {
+		case "1" : 
+			turnback = self.splittingOperation(numberOfSplitting, percentage);
+		case "2" : "2".println();
+		case "3" : "3".println(); 
+		default:
+			turnback = self.splittingComponent(numberOfSplitting, percentage);
+	}
+	
+	return turnback;
+}
+
+operation Operation splittingComponent( numberOfSplitting : Integer, percentage : Integer ) : Boolean {	
+	var splittedComponent : Component = self.splitComponent();
+	//sposto l'operazione critica sul nuovo compomente
+	var interaction = self.getAllInteractions()->first();
+	var lifelines = self.class.getLifelines();
+	var sourceLifeline;
+	
+	var lifeline = interaction.createLifeline(splittedComponent.name+"lifeline");
+	var spProp = interaction.createOwnedAttribute(splittedComponent.name, splittedComponent);
+	lifeline.setRepresents(spProp);
+	
+	var newOperation = self.cloneOperationInto(splittedComponent);
+	
+	var newMessage = interaction.createMessage(newOperation.name+"_message");
+	
+	for(lf in lifelines){
+		if(lf.namespace == interaction and lf.represents.type == self.class){
+			sourceLifeline = lf;
+			break;
+		}	
+	}
+	
+	var sendMOS : MessageOccuranceSpecification = new MessageOccuranceSpecification;
+	var receiveMOS : MessageOccuranceSpecification = new MessageOccuranceSpecification;
+	
+	sendMOS.setMessage(newMessage);
+	receiveMOS.setMessage(newMessage);
+	
+	newMessage.setSendEvent(sendMOS);
+	newMessage.setReceiveEvent(receiveMOS);
+	
+	
+	
+	return splittedComponent.moveOperation(self);
+}
+
+operation Operation splittingOperation(numberOfSplitting : Integer, percentage : Integer) : Boolean{
+	
+}

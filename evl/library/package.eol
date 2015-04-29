@@ -1,0 +1,16 @@
+//recupero la lista di usage proprie del package
+operation Package getUsageRelations() : List(Usage){
+	var returnValue : List(Usage) = new List(Usage);
+	
+	for(relation in Usage.allInstances){
+		if( relation.isTypeOf(Usage) and relation.owner == self){
+			returnValue.add(relation);
+		}
+	}
+	return returnValue;
+}
+
+//aggiungo il componente al package
+operation Package addElement(element : Element){
+	self.packagedElement.add(element);
+}

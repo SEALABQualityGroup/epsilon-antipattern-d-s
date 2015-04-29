@@ -1,0 +1,7 @@
+operation Lifeline getIndexReceiveMOS(message : Message) : MessageOccuranceSpecification{
+	var i : Integer = 0;
+	(self.getCoveredBys()).println();
+	for(cov in self.getCoveredBys()){
+		cov.println();
+	}
+}

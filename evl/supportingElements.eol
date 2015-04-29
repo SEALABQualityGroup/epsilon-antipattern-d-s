@@ -1,0 +1,20 @@
+operation Element getOwner() : Element {
+	return self.getOwner;
+}
+
+operation Element setOwner(owner : Element) {
+	return self.setOwner = owner;
+}
+
+operation Sequence(Element) getSequenceString() : String {
+	var res : String := '';
+	if(self.isDefined() and self->notEmpty())
+	{
+		res := res.concat('{');
+		for(el in self) {
+			res := res.concat(el->asString() + ', ');
+		}
+		res := res.substring(0,res.length()-2).concat('}');
+	}
+	return res;
+}

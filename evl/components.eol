@@ -1,0 +1,105 @@
+//true se sono vere controller and controlled
+//false se not controller or not controlled
+operation Component Blob_static() : Boolean {
+	return self.Blob_static_controller() and self.Blob_static_controlled();
+}
+
+//true se non ha molte connessioni come client verso altre componenti
+operation Component Blob_static_controller() : Boolean {
+	--threshold
+	-- Th_maxConnects = 5
+	var Th_maxConnects : Real := 4.0;  
+	var supplierNeighbours := self.getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);
+	return
+		supplierNeighbours->isEmpty();
+}
+
+//true se non ha molte connessioni come supplier verso altre componenti
+operation Component Blob_static_controlled() : Boolean {
+	var Th_maxConnects : Real := 4.0;
+	var clientNeighbours := self.getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);
+	return
+		clientNeighbours->isEmpty();
+}
+
+//true se sono vere centralized and distributed
+//false se not centralized or not distributed
+operation Component Blob_deployment() : Boolean {
+	return self.Blob_deployment_centralized() and self.Blob_deployment_distributed();
+}
+
+//true se il nodo su cui sta non ha una util alta o se non � in compagnia di altre components con tante connessioni
+//false se il nodo su cui sta ha una util alta e se la componente � in compagnia di altre components con tante connessioni
+
+--Threshold
+-- Th_maxHwUtil = 90%
+
+operation Component Blob_deployment_centralized() : Boolean {
+	var Th_maxConnects : Real := 4.0;
+	var Th_maxHwUtil : Real := 0.7;
+	var selfDeployNodeUtil : Real := 0.0;		
+	var selfDeployNode : Node := self.getDeployNode();
+	System.user.inform(self.name->asString() + ' is deployed on ' + selfDeployNode.name->asString());
+	--System.user.inform(selfDeployNode.name->asString());
+	--System.user.inform('Is ' + selfDeployNode.name + ' a GaExecHost? ' + selfDeployNode.hasStereotype('GaExecHost')->asString());
+	--System.user.inform('(GaExecHost? ' + selfDeployNode.hasStereotype('GaExecHost')->asString() + ') ' + selfDeployNode.name + ' utilization = ' + selfDeployNode.getValue(selfDeployNode.getStereotype('GaExecHost'), 'utilization')->first()->asString());			
+	if(selfDeployNode->isDefined())
+		if (selfDeployNode.hasStereotype('GaExecHost') and selfDeployNode.hasValue(selfDeployNode.getStereotype('GaExecHost'), 'utilization')) 
+			selfDeployNodeUtil := selfDeployNode.getValue(selfDeployNode.getStereotype('GaExecHost'), 'utilization')->first().asReal();				
+	--System.user.inform(selfDeployNodeUtil->asString());				
+	var clientNeighbours := self.getClientNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);
+	var supplierNeighbours := self.getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);		
+	--System.user.inform('Component ' + self.name + ' - Client neighbours connected by ' + Th_maxConnects->asString() + ' connections at least: ' + clientNeighbours->collect(n | n.name)->asString());
+	--System.user.inform('Component ' + self.name + ' - Supplier neighbours connected by ' + Th_maxConnects->asString() + ' connections at least: ' + supplierNeighbours->collect(n | n.name)->asString());		
+	if(selfDeployNodeUtil >= Th_maxHwUtil)
+	{	
+		var supplierNeighboursOnSelfDeployNode := supplierNeighbours->select(n | n.getDeployNode() == selfDeployNode);
+		var clientNeighboursOnSelfDeployNode := clientNeighbours->select(n | n.getDeployNode() == selfDeployNode);
+		if(clientNeighboursOnSelfDeployNode->isEmpty() and supplierNeighboursOnSelfDeployNode->isEmpty())
+		{
+			return true;
+		} else {
+			if(clientNeighboursOnSelfDeployNode->isEmpty())
+			{
+				return not supplierNeighboursOnSelfDeployNode->exists(n | n.getDeployNode() == selfDeployNode);
+			} else {
+				return not clientNeighboursOnSelfDeployNode->exists(n | n.getDeployNode() == selfDeployNode);
+			}
+		}
+	}
+	else return true;
+}
+
+//true se i network link nel mezzo non hanno una util alta o se non vi sono altre components con tante connessioni sui nodi vicini
+//false se il nodo su cui sta � vicino ad un'altra componente su un altro nodo connesso ad un qualche network link con una util alta
+operation Component Blob_deployment_distributed() : Boolean {
+	var Th_maxConnects : Real := 4.0;
+	var Th_maxNetUtil : Real := 0.7;
+	var selfDeployNodeUtil : Real := 0.0;		
+	var selfDeployNode : Node := self.getDeployNode();			
+	var clientNeighbours := self.getClientNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);
+	var supplierNeighbours := self.getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);		
+	var supplierNeighboursOnDifferentDeployNode := supplierNeighbours->select(n | n.getDeployNode() <> selfDeployNode);
+	var clientNeighboursOnDifferentDeployNode := clientNeighbours->select(n | n.getDeployNode() <> selfDeployNode);
+	var selfDeployNodeNeighbours := selfDeployNode.getNodeNeighbours();
+	--System.user.inform('Node ' + self.name + ' Neighbours: ' + selfDeployNodeNeighbours->collect(n | n.name)->asString());
+	if(clientNeighboursOnDifferentDeployNode->isEmpty() and supplierNeighboursOnDifferentDeployNode->isEmpty())
+	{
+		return true;
+	} else {
+		if(clientNeighboursOnDifferentDeployNode->isEmpty())
+		{
+			--return not supplierNeighboursOnDifferentDeployNode->exists(n | selfDeployNodeNeighbours->includes(n.getDeployNode()));
+			return not supplierNeighboursOnDifferentDeployNode
+							->exists(n | n.getDeployNode().getNetworkLinks()
+											->select(nl | self.getDeployNode().getNetworkLinks()->includes(nl))
+												->exists(nl | nl.getValue(nl.getStereotype('GaCommHost'), 'utilization')->first().asReal() >= Th_maxNetUtil));
+		} else {
+			--return not clientNeighboursOnDifferentDeployNode->exists(n | selfDeployNodeNeighbours->includes(n.getDeployNode()));
+			return not clientNeighboursOnDifferentDeployNode
+							->exists(n | n.getDeployNode().getNetworkLinks()
+											->select(nl | self.getDeployNode().getNetworkLinks()->includes(nl))
+												->exists(nl | nl.getValue(nl.getStereotype('GaCommHost'), 'utilization')->first().asReal() >= Th_maxNetUtil));
+		}
+	}
+}

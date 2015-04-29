@@ -1,0 +1,9 @@
+//verifico se l'artifact rappresenta il componente passato per parametro
+operation Artifact hasRepresentationOf(component : Component) : Boolean {
+	for(manifestation in self.manifestation){
+		if(manifestation.utilizedElement == component){
+			return true;
+		}
+	}
+	return false;
+}

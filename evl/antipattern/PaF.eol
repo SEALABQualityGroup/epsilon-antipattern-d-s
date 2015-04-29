@@ -1,0 +1,90 @@
+operation Operation PaF_resDemand() : Boolean{
+
+	var th_maxOpResDemand : List( Real ) = new List( Real );
+	th_maxOpResDemand.add(0.5); //computation
+	th_maxOpResDemand.add(0.5); //storage
+	th_maxOpResDemand.add(0.5); //bandwidth
+	
+	var turnback : Boolean = true;
+	
+	var appliedStereotypes = self.getAppliedStereotypes();
+	
+	var gaStep = self.getStereotype('GaStep');
+	var servCount = self.getValue(gaStep, 'servCount');
+	
+	var i : Integer = 0;
+
+	for(demand in servCount){
+		if(demand.asReal() < th_maxOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+			turnback = false;
+			break;
+		}
+		i = i+1;
+	}
+	return turnback;	
+}
+
+
+/***************************
+	NB in teoria la probabilita' deve essere legata al messaggio che rappresenta l'operazione all'interno di un
+	UseCase. Quindi anche il check che faccio deve essere rivisto? 
+	ovvero bisogna trovare prima tutti gli UseCase nei quali viene eseguita l'operazione, tra questi individuare quelli 
+	in cui l'operazione e' eseguita con prob > della threshold.
+****************************/
+operation Operation PaF_F_probExec() : Boolean{
+
+	var th_probability = 1; //threshold per la probabilita' di esecuzione dello 
+	
+	var turnback = false;
+	
+	var gaStep = self.getStereotype('GaStep');
+	var probability = self.getValue(gaStep, 'prob');
+	
+	if(probability.asReal() == th_probability){
+		turnback = true;
+	}
+	
+	return turnback;
+}
+
+operation Operation PaF_F_maxHwUtil() : List(Node){
+	
+	var th_maxHwUtil : Real = 0.5; //threshold per l'utilizzazione
+	
+	var listOfProcessNode : List(Node) = new List(Node);
+	
+	listOfProcessNode = self.getProcessNodes();
+	
+	var listOfProcessNodeWithUtilizationGreater : List(Node) = new List(Node);
+	
+	for(node in listOfProcessNode){
+		if(node.hasStereotype('GaExecHost') ){
+			var utilization = node.getValue(node.getStereotype('GaExecHost'), 'utilization')->first();
+			var i : Integer = 0;
+			if( utilization >= th_maxHwUtil ){
+				listOfProcessNodeWithUtilizationGreater.add(node);
+			}
+		}
+	}
+	return listOfProcessNodeWithUtilizationGreater;
+}
+
+operation Operation PaF_F_throughtput() : List(UseCase){
+	
+	var th_sThReq = 0.9;
+	var turnback = false;
+
+	var listOfUseCases : List(UseCase) = self.getUseCases(); 
+	
+	var listOfUseCaseWithThroughputLessThanThreshold : List(UseCase) = new List(UseCase);
+
+	for(useCase in listOfUseCases){
+		if(useCase.hasStereotype('GaScenario')){
+			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
+			if(throughput < th_sThReq){
+				listOfUseCaseWithThroughputLessThanThreshold.add(useCase);	
+			}
+		}
+	}
+	return listOfUseCaseWithThroughputLessThanThreshold;
+}

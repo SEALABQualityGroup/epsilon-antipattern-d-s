@@ -1,0 +1,16 @@
+operation Interaction hasOperation(op : Operation) : Boolean {
+	for(message in self.message){
+		if(message.signature == op){
+			return true;
+		}
+	}
+	return false;
+}
+
+operation Interaction hasComponent(component : Component) : Boolean {
+	for(property in self.ownedAttribute){
+		if(property.type == component){
+			return true;
+		}
+	}
+}

@@ -1,0 +1,175 @@
+//clone le operazioni del componente componente
+operation Component cloneOwnedOperationFrom(componentSource : Component){
+	for(op in componentSource.ownedOperation){
+		op.cloneOperationInto(self);
+	}
+}
+
+//aggiungo una nuova operazione al componente
+operation Component moveOperation( op : Operation ) : Boolean{
+	//if(self.ownedOperation.add(op))
+		return true;
+	//return false;
+}
+
+
+/*
+	Clonazione delle interfacce di un componente
+*/
+
+//clone le interface realization del componente
+operation Component cloneInterfaceRealizationFrom(component : Component) {
+	for(realization in component.interfaceRealization){
+		self.interfaceRealization.add(realization.cloneInterfaceRealization());
+	}
+}
+
+//clone le provideds inteface
+operation Component cloneProvidedsFrom(component : Component){
+	for(providedInterface in component.getProvideds()){
+		self.getProvideds().add(providedInterface);
+	}
+}
+
+//clone le requireds interface
+operation Component cloneRequiredsFrom(component : Component ){
+	for(requiredInterface in component.getRequireds()){
+		self.getRequireds().add(requiredInterface);
+	}
+}
+
+//recupero gli artefatti del componente
+operation Component getArtifacts() : List(Artifact){
+	var returnValue : List(Artifact) = new List(Artifact);
+	
+	for(artifact in Artifact.allInstances){
+		for(manifestation in artifact.getManifestations() ){
+			if(manifestation.utilizedElement == self){
+				returnValue.add(artifact);
+			}
+		}
+	}
+	return returnValue;
+}
+
+//recupero le lifeline del component
+operation Component getLifelines() : List(Lifeline){
+	var returnValue : List(Lifeline) = new List (Lifeline);
+	for(lifeline in Lifeline.allInstances){
+		if(lifeline.namespace.isDefined() and lifeline.namespace.hasComponent(self)){
+			returnValue.add(lifeline);
+		}
+	}
+	return returnValue;
+}
+
+//sposto le provided interfaces sul componente
+operation Component moveInterfaceRealizations(interfaceRealization : InterfaceRealization){
+	//self.interfaceRealization.add(interfaceRealization);
+}
+
+
+operation Component getAllUsedIntefacesProvidedsBy (op : Operation) : List(Interface){
+	var returnValue : List(Interface) = new List(Interface);
+	
+	var listOfUsage = op.getNearestPackage().getUsageRelations();
+	
+	for (proInterface in self.getProvidedInterfaces() ){
+		for(usage in listOfUsage){
+			if(usage.supplier->first() == op){
+				for(iOp in proInterface.getOwnedOperations()){
+					if(usage.client->first() == iOp){
+						returnValue.add(proInterface);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	//le sole interfacce utilizzate dall'operzione critica
+	for(proInterface in returnValue){
+		for(usage in listOfUsage){
+			if(usage.supplier->first() <> self and usage.client->first == proInterface){
+				returnValue.remove(proInterface);
+			}
+		}
+	}
+	
+	return returnValue;
+}
+
+//recupero la lista delle interfacce richieste
+operation Component getAllUsedIntefacesRequiredsBy ( op : Operation ) : List(Interface){
+	var returnValue : List(Interface) = new List(Interface);
+	var listOfUsage = self.getUsageRelations();
+	var listOfRequireds = self.getRequireds();
+	for (reqInterface in listOfRequireds){
+		for(usage in self.getNearestPackage().getUsageRelations()){
+			//TODO
+		}
+	}
+	return returnValue;
+}
+
+//recupero la lista di usage proprie del componente
+operation Component getUsageRelations() : List(Usage){
+	var returnValue : List(Usage) = new List(Usage);
+	
+	for(relation in Usage.allInstances){
+		if( relation.isTypeOf(Usage) and relation.owner == self){
+			returnValue.add(relation);
+		}
+	}
+	return returnValue;
+}
+
+//recupero la lista degli artifact che manifestano il componente
+operation Component getAllArtifacts() : Sequence(Artifact){
+	var returnValue : Sequence(Artifact) = new Sequence(Artifact);
+	
+	for(manifestation in Manifestation.allInstances){
+		if(manifestation.hasUtilizedElement(self)){
+			returnValue.addAll(manifestation.client);
+		}
+	}
+	return returnValue;
+	
+}
+
+//recupero tutte le properties relative al componente negli interaction
+operation Component getAllInteractionProperties() : List(Property){
+	var returnValue : List(Lifeline) = new List(Lifelinei);
+	
+	for(interaction in Interaction.allInstances){
+		for(prop in interaction.ownedAttribute){
+			if(prop.getType() == self){
+				returnValue.add(prop);
+			}
+		}
+	}
+	
+	return returnValue;
+}
+
+//recupero tutte le lifeline del componente
+operation Component getAllLifelines() : List(Lifeline){
+	var returnValue : List(Lifeline) = new List(Lifelinei);
+	
+	for(lifeline in Lifeline.allInstances){
+		for(pro in self.getProperties()){
+			if(lifeline.represents == prop){
+				returnValue.add(lifeline);
+			}
+		}
+	}
+	
+}
+
+operation Component getProvidedInterfaces() : Sequence(InterfaceRealization) {
+	return self.getInterfaceRealizations()->collect(cd | cd.supplier->first())->asSequence();
+}
+
+operation Component getInterfaceRealizations() : Sequence(InterfaceRealization) {
+	return self.clientDependency->select(cd | cd.isTypeOf(InterfaceRealization))->asSequence();
+}

@@ -1,0 +1,62 @@
+operation Node hasDeployment(artifact : Artifact) : Boolean{
+	for(deployment in self.deployment){
+		for(art in deployment.getDeployedArtifacts()){
+			if(art == artifact){
+				return true;
+			}		
+		}
+	}
+	return false;
+}
+
+//recupero la lista dei nodi connessi al componente
+operation Node getOwnedLink() : List(Node){
+	var returnValue : List(Node) = new List(Node);
+	
+	//orderedSet
+	for (prop in  self.ownedAttribute){
+			returnValue.add(prop);
+	}
+	return returnValue;
+}
+
+//clone gli artefatti dal nodo splittato al nuovo nodo
+operation Node cloneDeployedArtifactFrom(node : Node){
+	for(dep in node.getDeployedElements()){
+		var newArtifact : Artifact = new Artifact;
+		var newManifestation : Manifestation = new Manifestation;
+		var newDeployment = new Deployment;
+		
+		node.getNearestPackage().addElement(newArtifact);
+		newArtifact.name = dep.name + " Splitted";
+		
+		newManifestation.utilizedElement = dep;
+		newArtifact.manifestation.add(newManifestation);
+			
+		self.deployment.add(newDeployment);
+		newDeployment.name = newArtifact.name;
+		newDeployment.deployedArtifact.add(newArtifact);
+	}
+}
+
+//clone i collegamenti tra il nuovo nodo e i nodi collegati al nodo splittato
+operation Node cloneLink(listOfLinkedNode : List(Property), packageContainer : Package){
+	for(linkedNode in listOfLinkedNode){
+		var linkedNodeEnd : Property = new Property;
+		var selfEnd : Property = new Property;
+		var commPath : CommunicationPath = new CommunicationPath;
+		
+		self.ownedAttribute.add(linkedNodeEnd);
+		linkedNodeEnd.name = linkedNode.name;
+		linkedNodeEnd.setType(linkedNode.getType());	
+		
+		linkedNode.getType().ownedAttribute.add(selfEnd);
+		selfEnd.name = self.name;
+		selfEnd.setType(self);
+		
+		packageContainer.addElement(commPath);
+		commPath.name = "A_"+linkedNode.name+"_"+selfEnd.name;
+		commPath.memberEnd.add(linkedNode);
+		commPath.memberEnd.add(selfEnd);
+	}
+}
