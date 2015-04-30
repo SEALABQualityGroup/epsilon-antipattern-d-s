@@ -33,3 +33,16 @@ operation Element hasStereotype(stereotypeName : String) : Boolean {
 operation Element getStereotype(stereotypeName : String) : Stereotype {
 	return self.getAppliedStereotypes()->select(s | s.name = stereotypeName)->first();
 }
+
+operation Element reductionServDemand(percentage : Real){
+	if(self.hasStereotype("GaStep")){
+		var stereotype = self.getStereotype("GaStep");
+		var newValue : List(String) = new List(String);
+		var servCountValues = self.getValue(stereotype, "servCount");
+		for(sC in servCountValues){
+			var value = sc.asReal();
+			 newValue.add(value - (value*percentage).asString());
+		}
+		self.setValue(stereotype, "GaStep", newValue);
+	}
+}

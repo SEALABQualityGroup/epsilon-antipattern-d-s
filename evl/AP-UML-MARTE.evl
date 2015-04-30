@@ -43,26 +43,50 @@ context Operation {
 			if(self.PaF_F_probExec() and 
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) ){
-							return true;
+							"bingo".println();
+							return false;
+							
 			}
-			return false;
+			return true;
 		}
 		message : 'PaF <Operation> ' + self.name
 		fix {
-			title : 'PipeAndFilter splitting SwEntityInstance'
+			title : 'New component and new node'
 			do {
+					//TODO pt1
 					--var numberOfSplitting = UserInput.promptInteger("Indicami il numero di splitting da fare ( default = 1 )", 1);
-					--var percentageOfReduction = UserInput.promptInteger("Indicami la percentuale di riduzione (default 0.5)", 50);
+					--var percentageOfReduction = UserInput.promptReal("Indicami la percentuale di riduzione (default 0.5)", 50);
 					--self.splitting(numberOfSplitting, percentageOfReduction);
-					self.splitting(1, 20);
+					--self.splitting(1, 20);
+					self.splittingComponent(20.0);
 			}
 		}
+		fix{
+			title : 'New component and node near less used'
+			do{
+				//TODO pt2
+				self.deployToNodeNearLessUsed();
+			}
+		}
+		fix{
+			title : 'Redeploy component on node Near Less used'
+			do{
+				//TODO pt3
+			}
+		}
+		fix{
+			title : 'Redeploy on the component less used on node near less used'
+			do{
+				//TODO pt4
+			}
+		}
+		
 	}
 }
 
 /*
 	Extensive Processing Antipattern Detection and Validation
-*/
+
 context Component{
 	guard : self.hasStereotype('PaRunTInstance') 
 	critique EP{
@@ -90,7 +114,7 @@ context Component{
 					-----Dynamic-------
 					1. spostare la seconda operazione nella seconda lifeline
 					2. mantenere le due operazioni in un alternative fragment
-				*/
+			
 				
 			}
 		}

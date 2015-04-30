@@ -1,3 +1,31 @@
+//recupero la lista delle operazioni che hanno un resDemand >= della threshold
+operation Component getOperationsWithUtilizationGreaterOrEqual(th_maxOpResDemand : List(Real) ) : List(Operation){
+	var listOfOperations = self.getOwnedOperations();
+	var returnValue : List(Operation) = new List(Operation);
+	for(op in listOfOperations){
+		if(op.hasStereotype('GaStep') and op.hasStereotype('GaScenario') ){
+			if(op.FresDemandGreaterOrEqualThan(th_maxOpResDemand) ){
+				returnValue.add(op);
+			}
+		}
+	}
+	return returnValue;
+}
+
+//recupero la lista delle operazioni che hanno un resDemand < della threshold
+operation Component getOperationsWithUtilizationLesserThan(th_minOpResDemand : List(Real) ) : List(Operation){
+	var listOfOperations = self.getOwnedOperations();
+	var returnValue : List(Operation) = new List(Operation);
+	for(op in listOfOperations){
+		if(op.hasStereotype('GaStep') and op.hasStereotype('GaScenario') ){
+			if(op.FresDemandGreaterOrEqualThan(th_minOpResDemand) ){
+				returnValue.add(op);
+			}
+		}
+	}
+	return returnValue;
+}
+
 operation Component EP_resDemand() : Boolean{
 	var th_maxOpResDemand : List( Real ) = new List( Real );
 	th_maxOpResDemand.add(0.5); //computation
@@ -11,17 +39,11 @@ operation Component EP_resDemand() : Boolean{
 	
 	var listOfOperations = self.getOwnedOperations();
 	
-	var returnValue : List(Operation) = new List(Operation);
-	for(op in listOfOperations){
-		if(op.hasStereotype('GaStep') and op.hasStereotype('GaScenario') ){
-			if(op.FresDemandGreaterOrEqualThan(th_maxOpResDemand) ){
-					opGreater.add(op);
-			}else if (op.FresDemandLesserThan(th_minOpResDemand)){
-				opLesser.add(op);
-			}
-		}
-	}
+	var opGreater : List(Operation) = self.getOperationsWithUtilizationGreaterOrEqual(th_maxOpResDemand);
+	var opLesser : List(Operation) = self.getOperationsWithUtilizationLesserThan(th_minOpResDemand);
 	
+	//ho almeno un'operazione con un utilizzazione maggiore ed una con un'utilizzazione minore
+	//delle threshold
 	if(opGreater.size() > 0 and opLesser.size() > 0){
 		return true;
 	}else{

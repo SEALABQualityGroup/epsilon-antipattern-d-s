@@ -14,14 +14,17 @@ operation Operation PaF_resDemand() : Boolean{
 	
 	var i : Integer = 0;
 
-	for(demand in servCount){
-		if(demand.asReal() < th_maxOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
-			turnback = false;
-			break;
+	if(servCount.size() == 0){
+		turnback = false;
+	}else{
+		for(demand in servCount){
+			if(demand.asReal() < th_maxOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+				turnback = false;
+				break;
+			}
+			i = i+1;
 		}
-		i = i+1;
 	}
-	
 	return turnback;	
 }
 
@@ -61,8 +64,7 @@ operation Operation PaF_F_maxHwUtil() : List(Node){
 	for(node in listOfProcessNode){
 		if(node.hasStereotype('GaExecHost') ){
 			var utilization = node.getValue(node.getStereotype('GaExecHost'), 'utilization')->first();
-			var i : Integer = 0;
-			if( utilization >= th_maxHwUtil ){
+	 		if( utilization.isDefined() and utilization.asReal() >= th_maxHwUtil ){
 				listOfProcessNodeWithUtilizationGreater.add(node);
 			}
 		}
@@ -83,7 +85,7 @@ operation Operation PaF_F_throughtput() : List(UseCase){
 	for(useCase in listOfUseCases){
 		if(useCase.hasStereotype('GaScenario')){
 			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
-			if(throughput < th_sThReq){
+			if(throughput.isDefined() and throughput.asReal() < th_sThReq){
 				listOfUseCaseWithThroughputLessThanThreshold.add(useCase);	
 			}
 		}

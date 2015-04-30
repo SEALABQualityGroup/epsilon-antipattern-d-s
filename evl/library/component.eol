@@ -186,7 +186,7 @@ operation Component getNodes() : List(Node){
 	return returnValue;
 }
 
-operation Component moveInterfaceRealizationFrom(component : Component, op : Operation) {
+operation Component moveInterfacesRealizationFrom(component : Component, op : Operation) {
 	var listOfUsedProvidedInterfaces : List(Interface) = component.getAllUsedIntefacesProvidedsBy(op);
 		
 	//sposto le interface realization delle interfacce della listOfUsedProvidedInterfaces 
@@ -203,4 +203,57 @@ operation Component moveInterfaceRealizationFrom(component : Component, op : Ope
 
 operation Component getOwnedOperations() : List(Operation){
 	return self.getOwnedOperations();
+}
+
+operation Component deployOnNewNodes(component : Component) {
+	
+	var listOfNode : List(Node) = component.getNodes();
+	
+	for(node in listOfNode){
+		node.clone(self);		
+	}
+}
+
+operation Component getNearLessUsedNodes() : List(Node){
+	
+	var listOfNode = self.getNodes();
+	var listOfNearLessUsed : List(Node) = new List(Node);
+	
+	for(node in listOfNode){
+		var listOfNearNode = node.getOwnedLink();
+		var lessNode : Node = listOfNode()->first(); 
+		var utilization = lessNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
+		if(utilization.isUndefined()) utilization = 0.0; //utilizzazione minima
+		for(nearNode in listOfNearNode){
+			var nearNodeUtilization =nearNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
+			if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
+				lessNode = nearNode;	
+				utilization = nearNodeUtilization;
+			}
+		}
+		listOfNearLessUsed.add(lessNode);
+	}
+	return listOfNearLessUsed;
+}
+
+/***********************
+
+	IT MUST BE CHECKED	
+
+************************/
+//FIXME Check the behavior
+operation Component deployOn(node : Node){
+	var newArtifact : Artifact = new Artifact; //creo l'artefatto
+	var newManifestation; //e' la manifestazione del componente
+	var newDeployment; //e' il deployment dell artefatto appena creato
+	
+	//aggiungo l'artefatto al package del nodo
+	node.getNearestPackage().addElement(newArtifact); 
+	//setto il nome dell'artefatto come il componente
+	newArtifact.name = self.name; 
+	
+	//creo la manifestazione del componente sull artefatto
+	newManifestation = newArtifact.createManifestation(self.name, self); 
+	newDeployment = node.createDeployment(newArtifact.name); //creo il deploy sul nodo
+	newDeployment.getDeployedArtifacts().add(newArtifact); //aggiungo al deploy l'artefatto
 }

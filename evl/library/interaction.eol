@@ -14,3 +14,12 @@ operation Interaction hasComponent(component : Component) : Boolean {
 		}
 	}
 }
+
+operation Interaction getIndexOf(fragment : InteractionFragment) : Integer{
+	var indexOf : Integer = self.getFragments()->indexOf(fragment);
+	return indexOf;
+}
+
+operation Interaction addFragmentAt(fragment : InteractionFragment, indexOf : Integer){
+	self.getFragments().add(indexOf,fragment);
+}

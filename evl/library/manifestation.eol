@@ -1,6 +1,4 @@
 operation Manifestation hasUtilizedElement(component : Component) : Boolean{
-	self.utilizedElement.println();
-	component.println();
 	if(self.utilizedElement == component){
 		return true;
 	}

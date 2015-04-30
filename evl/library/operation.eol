@@ -21,7 +21,7 @@ operation Operation FresDemandGreaterOrEqualThan( th_maxOpResDemand : List(Real)
 }
 
 operation Operation FresDemandLesserThan( th_minOpResDemand : List(Real) ) : Boolean{
-	
+
 	var turnback : Boolean = true;
 	
 	var appliedStereotypes = self.getAppliedStereotypes();
@@ -32,13 +32,12 @@ operation Operation FresDemandLesserThan( th_minOpResDemand : List(Real) ) : Boo
 	var i : Integer = 0;
 
 	for(demand in servCount){
-		if(demand.asReal() < th_minOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+		if(demand.asReal() >= th_minOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
 			turnback = false;
 			break;
 		}
 		i = i+1;
 	}
-	
 	return turnback;	
 }
 
@@ -111,7 +110,7 @@ operation Operation getUseCases() : List(UseCase){
 }
 
 //splitta il componente
-operation Operation splitComponent(reduction : Integer) : Component{
+operation Operation splitComponent(reduction : Real) : Component{
 	
 	var selfComponent = self.class; //recupero il componente che possiede l'operazione critica
 	var selfPackage = self.getNearestPackage(); //recupero il package contenitore dell'operazione critica
@@ -121,20 +120,13 @@ operation Operation splitComponent(reduction : Integer) : Component{
 	selfPackage.addElement(splittedComponent); //aggiungo il componente splittato al package del componente sorgente
 	splittedComponent.cloneAppliedStereotypesFrom(selfComponent); //clono gli stessi stereotipi del componente sorgente
 	
-	splittedComponent.moveInterfaceRealizationFrom(selfComponent, self);
+	splittedComponent.moveInterfacesRealizationFrom(selfComponent, self);
+	--splittedComponent.moveInterfacesUsedFrom(selfComponent, self);
 	
-	var listOfUsedProvidedInterfaces : List(Interface) = selfComponent.getAllUsedIntefacesRequiredsBy(self);
+	var listOfUsedProvidedInterfaces : List(Interface) = selfComponent.getAllUsedIntefacesRequiredsBy(self); //TODO vedere il nuovo modello
 	
-	/*
-		DEPLOY
-	*/
+	splittedComponent.reductionServDemand(reduction);
 	
-	var listOfNode : List(Node) = selfComponent.getNodes();
-	
-	for(node in listOfNode){
-		node.clone(splittedComponent, reduction);		
-	}
-	Manifestation.allInstances.size().println();
 	return splittedComponent;
 }
 
@@ -162,4 +154,9 @@ operation Operation getAllInteractions() : List(Interaction){
 		}
 	}
 	return returnValue;
+}
+
+operation Operation getMessageIn(interaction : Interaction) : Message{
+	var mes = interaction.getMessages()->selectOne(iterator : Message | iterator.getSignature() == self);
+	return mes;
 }

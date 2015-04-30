@@ -14,11 +14,18 @@ operation Node getOwnedLink() : List(Node){
 	var returnValue : List(Node) = new List(Node);
 	
 	//orderedSet
-	for (prop in  self.ownedAttribute){
+	for (prop in self.ownedAttribute){
 			returnValue.add(prop);
 	}
 	return returnValue;
 }
+
+/***********************
+
+	IT MUST BE CHECKED	
+
+************************/
+//FIXME Check the behavior
 
 //clone gli artefatti dal nodo splittato al nuovo nodo
 operation Node cloneDeployedArtifactFrom(node : Node, component : Component){
@@ -66,6 +73,26 @@ operation Node cloneLink(listOfLinkedNode : List(Property), packageContainer : P
 	}
 }
 
+
+operation Node clone(component : Component){
+		var newNode : Node = new Node; //creo il nuovo nodo
+		var listOfLinkedNode = self.getOwnedLink(); //recupero la lista dei link del nodo
+		var packageContainer : Package = self.getNearestPackage();  //recupero il package container
+		newNode.name = self.name+" Splitted";
+		packageContainer.addElement(newNode);
+
+		newNode.cloneAppliedStereotypesFrom(self); //clono gli stereotipi del nodo sorgente
+		newNode.cloneDeployedArtifactFrom(self, component); //clono gli artefatti del nodo sorgente
+		newNode.cloneLink(listOfLinkedNode, packageContainer);
+}
+
+/***********************
+
+	IT MUST BE CHECKED	
+
+************************/
+//FIXME Check the behavior
+//VALUE zero dello stereotipo
 operation Node clone(component : Component, reduction : Integer){
 		var newNode : Node = new Node; //creo il nuovo nodo
 		var listOfLinkedNode = self.getOwnedLink(); //recupero la lista dei link del nodo
@@ -76,17 +103,30 @@ operation Node clone(component : Component, reduction : Integer){
 		newNode.cloneAppliedStereotypesFrom(self); //clono gli stereotipi del nodo sorgente
 		newNode.cloneDeployedArtifactFrom(self, component); //clono gli artefatti del nodo sorgente
 		newNode.cloneLink(listOfLinkedNode, packageContainer);
-		newNode.applyReductionOfUtilizationFrom(self, reduction);
+		//newNode.applyReductionOfUtilizationFrom(self, reduction);
 }
 
 operation Node applyReductionOfUtilizationFrom(node : Node, percentage : Integer){
 	"into applyReduction".println();
 	var stereotype = node.getStereotype("GaExecHost");
+	node.println();
+	stereotype.println();
+	node.getValue(stereotype, "utilization").println();
 	var reduction : Real = (percentage.asReal()/100)*(node.getValue(stereotype, "utilization")->first().asReal());
 	reduction.println();
-	var value : List(String) = new List(String);
-	value.add((node.getValue(stereotype, "utilization")->first().asReal() - reduction).asString());
+	var value : String = (node.getValue(stereotype, "utilization")->first().asReal() - reduction).asString();
 	(node.getValue(stereotype, "utilization")->first().type()).println();
 	value.type().println();
 	self.setValue(stereotype, "utilization", value );
+}
+
+operation Node getArtifactOf(component : Component) : Artifact{
+	for(deployment in self.deployment){
+		for(art in deployment.getDeployedArtifacts()){
+			if(art.hasRepresentationOf(component)){
+				return art;
+			}		
+		}
+	}
+	return null;
 }
