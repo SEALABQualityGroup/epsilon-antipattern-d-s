@@ -21,6 +21,7 @@ operation Operation PaF_resDemand() : Boolean{
 		}
 		i = i+1;
 	}
+	
 	return turnback;	
 }
 
@@ -49,7 +50,7 @@ operation Operation PaF_F_probExec() : Boolean{
 
 operation Operation PaF_F_maxHwUtil() : List(Node){
 	
-	var th_maxHwUtil : Real = 0.5; //threshold per l'utilizzazione
+	var th_maxHwUtil : Real = 0.7; //threshold per l'utilizzazione
 	
 	var listOfProcessNode : List(Node) = new List(Node);
 	
@@ -66,6 +67,7 @@ operation Operation PaF_F_maxHwUtil() : List(Node){
 			}
 		}
 	}
+	
 	return listOfProcessNodeWithUtilizationGreater;
 }
 
@@ -86,5 +88,6 @@ operation Operation PaF_F_throughtput() : List(UseCase){
 			}
 		}
 	}
+	
 	return listOfUseCaseWithThroughputLessThanThreshold;
 }

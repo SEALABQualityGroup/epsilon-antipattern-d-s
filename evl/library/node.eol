@@ -21,21 +21,26 @@ operation Node getOwnedLink() : List(Node){
 }
 
 //clone gli artefatti dal nodo splittato al nuovo nodo
-operation Node cloneDeployedArtifactFrom(node : Node){
+operation Node cloneDeployedArtifactFrom(node : Node, component : Component){
 	for(dep in node.getDeployedElements()){
-		var newArtifact : Artifact = new Artifact;
-		var newManifestation : Manifestation = new Manifestation;
-		var newDeployment = new Deployment;
 		
-		node.getNearestPackage().addElement(newArtifact);
-		newArtifact.name = dep.name + " Splitted";
+		var newArtifact : Artifact = new Artifact; //creo l'artefatto
+		var newManifestation; //e' la manifestazione del componente
+		var newDeployment; //e' il deployment dell artefatto appena creato
 		
-		newManifestation.utilizedElement = dep;
-		newArtifact.manifestation.add(newManifestation);
+		self.getNearestPackage().addElement(newArtifact); //aggiungo l'artefatto al package del nodo
+		newArtifact.name = component.name; //setto il nome dell'artefatto come il componente
+		
+		//creo la manifestazione del componente sull artefatto
+		newManifestation = newArtifact.createManifestation(component.name, component); 
+		//newManifestation.utilizedElement = component;
+		
+		//newArtifact.manifestation.add(newManifestation);
 			
-		self.deployment.add(newDeployment);
-		newDeployment.name = newArtifact.name;
-		newDeployment.deployedArtifact.add(newArtifact);
+		//self.deployment.add(newDeployment);
+		newDeployment = self.createDeployment(newArtifact.name); //creo il deploy sul nodo
+		//newDeployment.name = newArtifact.name;
+		newDeployment.getDeployedArtifacts().add(newArtifact); //aggiungo al deploy l'artefatto
 	}
 }
 
@@ -59,4 +64,29 @@ operation Node cloneLink(listOfLinkedNode : List(Property), packageContainer : P
 		commPath.memberEnd.add(linkedNode);
 		commPath.memberEnd.add(selfEnd);
 	}
+}
+
+operation Node clone(component : Component, reduction : Integer){
+		var newNode : Node = new Node; //creo il nuovo nodo
+		var listOfLinkedNode = self.getOwnedLink(); //recupero la lista dei link del nodo
+		var packageContainer : Package = self.getNearestPackage();  //recupero il package container
+		newNode.name = self.name+" Splitted";
+		packageContainer.addElement(newNode);
+
+		newNode.cloneAppliedStereotypesFrom(self); //clono gli stereotipi del nodo sorgente
+		newNode.cloneDeployedArtifactFrom(self, component); //clono gli artefatti del nodo sorgente
+		newNode.cloneLink(listOfLinkedNode, packageContainer);
+		newNode.applyReductionOfUtilizationFrom(self, reduction);
+}
+
+operation Node applyReductionOfUtilizationFrom(node : Node, percentage : Integer){
+	"into applyReduction".println();
+	var stereotype = node.getStereotype("GaExecHost");
+	var reduction : Real = (percentage.asReal()/100)*(node.getValue(stereotype, "utilization")->first().asReal());
+	reduction.println();
+	var value : List(String) = new List(String);
+	value.add((node.getValue(stereotype, "utilization")->first().asReal() - reduction).asString());
+	(node.getValue(stereotype, "utilization")->first().type()).println();
+	value.type().println();
+	self.setValue(stereotype, "utilization", value );
 }

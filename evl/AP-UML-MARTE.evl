@@ -49,190 +49,12 @@ context Operation {
 		}
 		message : 'PaF <Operation> ' + self.name
 		fix {
-			--guard : self.PaF_test()
 			title : 'PipeAndFilter splitting SwEntityInstance'
 			do {
-					"We are into PaF fixing".println();
-					
-					//TODO
-					/*
-						------Static------
-						1. creare un nuovo componente
-						2. creare una nuova operazione
-						
-						------Deploy -----
-						1. creare un nuovo nodo
-						2. deployare il nuovo componente sul nuovo nodo
-						
-						-----Dynamic-------
-						1. collegare la nuova operazione al incoming message dell'operazione critica
-						2. collegare la successiva operazione a quella critica con la nuova operazione
-					*/
-					
-					
-					("critique operation found: "+self.name).println();
 					--var numberOfSplitting = UserInput.promptInteger("Indicami il numero di splitting da fare ( default = 1 )", 1);
 					--var percentageOfReduction = UserInput.promptInteger("Indicami la percentuale di riduzione (default 0.5)", 50);
 					--self.splitting(numberOfSplitting, percentageOfReduction);
-					self.splitting(1, 5);
-				
-				/*	
-				"***************** STATIC ***********************".println();
-				//point 1
-					"---- Point 1: we are creating a new <<SoftwareEntityInstance>>".println();
-					var staticPackageContainer = self.getNearestPackage();
-					var newComponent = new Component;
-					staticPackageContainer.packagedElement.add(newComponent);
-					newComponent.name = self.class.name + " PaF";
-					
-				//point 2
-					"---- Point 2: we are creating a new Operation".println();
-					var newOperation = new Operation;
-					newComponent.ownedOperation.add(newOperation);
-					newOperation.name = self.name + "_PaF";
-					
-					//clono il componente
-					//staticPackageContainer.packagedElement.add(self.class.clone());
-					
-				"***************** DEPLOY ***********************".println();
-				//point 1
-					"---- Point 1: we are creating a new <<ProcessNode>>".println();
-					//seleziono l'artefatto che manifesta il componente dell'operaione
-					var testArtifact = Artifact.allInstances->selectOne(
-						artifactIterator : Artifact | 
-							artifactIterator.manifestation->selectOne(
-								iterator : Manifestation | iterator.utilizedElement == self.class
-							).isDefined()
-					);
-					
-					//recupero il deployNode partendo dall'artefatto 
-					//che manifesta il componente avente l'operazione critica
-					var deployedElement = Deployment.allInstances->selectOne(
-						deploymentIterator : Deployment |
-							deploymentIterator.deployedArtifact->selectOne(
-								dArtifactIterator : DeployedArtifact |
-									dArtifactIterator.name == testArtifact.name
-							).isDefined()
-					);
-					var deployNode = Node.allInstances->selectOne(
-						nodeIterator : Node |
-							nodeIterator.deployment->selectOne(
-								deploymentIterator : Deployment |
-									deploymentIterator == deployedElement
-							).isDefined()
-					);
-					
-					var deployNodeOwnerPackage = deployNode.getNearestPackage();
-					
-					//creo il nuovo nodo e lo inserisco nello stesso package del deployNode
-					var newNode = new Node;
-					deployNodeOwnerPackage.packagedElement.add(newNode);
-					newNode.name = deployNode.name + " PaF";
-					
-					//applico gli stessi stereotipi del nodo splittato
-					/*var deployNodeStereotypes = deployNode.getAppliedStereotypes();
-					for ( stereotype in deployNodeStereotypes ){
-						newNode.applyStereotype(stereotype);
-					}*/
-				
-				/*
-				//point 2
-					"---- Point 2: we are deploying the new artifact into the new node, which are created previously".println();
-					//creo un nuovo artefatto
-					var newArtifact = new Artifact;
-					deployNodeOwnerPackage.packagedElement.add(newArtifact);
-					newArtifact.name = testArtifact.name + "PaF";
-					
-					//creo una nuova manifestazione per l'artefatto
-					var newManifestation = new Manifestation;
-					newArtifact.manifestation.add(newManifestation);
-					
-					//collego il nuovo artefatto con il componente creato
-					//al punto 1 del fix statico
-					newManifestation.utilizedElement = newComponent;
-					
-					//deploy il nuovo artefatto nel nuovo nodo
-					var newDeployment = new Deployment;
-					newNode.deployment.add(newDeployment);
-					newDeployment.name = newArtifact.name;
-					newDeployment.deployedArtifact.add(newArtifact);
-					
-				"***************** DYNAMIC ***********************".println();
-				//point 1
-					"---- Point 1: we are creating a new operation into Dynamic diagram".println();
-					//recupero il message che rappresenta l'operazione critica
-					var selfMessage = Message.allInstances->selectOne(
-						messageIterator : Message |
-							messageIterator.signature == self
-					);
-					
-					var selfLifeline = Lifeline.allInstances->selectOne(
-						iterator : Lifeline | iterator.represents.type == self.class
-					);
-					
-					//recupero l'interaction contenitore 
-					//NB possono essere piu di uno??????
-					var selfInteractionContainer = Interaction.allInstances->selectOne(
-						interactionIterator : Interaction |
-							interactionIterator.ownedElement->selectOne(
-								ownedElementIterator : Message |
-									ownedElementIterator.signature == self
-							).isDefined()
-					);
-					
-					//recupero gli ownedAttribute dell'interaction contenitore
-					var selfInteractionContainerOwnedAttribute = selfInteractionContainer.ownedAttribute;
-					
-					//creo un link nell'interaction contenitore con il nuovo componente, creato precedentemente
-					var newOwnedAttribute = new Property;
-					newOwnedAttribute.type = newComponent;
-					selfInteractionContainerOwnedAttribute.add(0, newOwnedAttribute);
-					
-					//creo una nuova lifeline e la aggiungo all'interaction contenitore
-					var newLifeline = new Lifeline;
-					selfInteractionContainer.getLifelines().add(newLifeline);
-					
-					//applico gli stessi stereotipi della lifeline
-					/*var selfLifelineStereotypes = selfLifeline.getAppliedStereotypes();
-					for ( stereotype in selfLifelineStereotypes ){
-						newLifeline.applyStereotype(stereotype);
-					}*/
-					
-					//creo un link tra la nuova lifeline e il nuovo ownedAttribute del nuovo componente
-				/*
-					newLifeline.represents = newOwnedAttribute;
-					
-				//point 2. collegare l'operazione succiva dell'operazione critica con la nuova operazione 
-					"---- Point 2: we are linking in sequence the messages".println();  
-					var selfRepresents = selfInteractionContainerOwnedAttribute->selectOne(
-						iterator : Property | iterator.type = self.class
-					);
-					
-					//ottengo la lifeline relativa all'operazione critica (component Database)
-					var selfLifeline = Lifeline.allInstances->selectOne(
-						iterator : Lifeline | iterator.represents == selfRepresents
-					);
-					
-					//recupero i covered by della life line
-					var selfLifelineCoverdBys = selfLifeline.getCoveredBys();
-					
-					//creo il nuovo message da inserire nel dynamic diagram
-					var newMessage = new Message;
-					selfInteractionContainer.getMessages().add(newMessage);
-					newMessage.name = self.name + "From" + self.class.name + "2" + newComponent.name;
-					newMessage.signature = newOperation;
-					
-					//creo un nuovo fragment di tipo MessageOccurrenceSpecification
-					var newMessageOccurrenceSpecificationSend = new MessageOccurrenceSpecification;
-					var newMessageOccurrenceSpecificationReceive = new MessageOccurrenceSpecification;
-					
-					selfInteractionContainer.getFragments().add(0,newMessageOccurrenceSpecificationSend);
-					selfInteractionContainer.getFragments().add(0,newMessageOccurrenceSpecificationReceive);
-					
-					//inserisco il nuvo messaggio nella lifeline dell'operazione critica
-					selfLifelineCoverdBys.add(newMessageOccurrenceSpecificationReceive);
-					selfLifelineCoverdBys.add(newMessageOccurrenceSpecificationSend);
-				*/
+					self.splitting(1, 20);
 			}
 		}
 	}
@@ -240,14 +62,15 @@ context Operation {
 
 /*
 	Extensive Processing Antipattern Detection and Validation
-
+*/
 context Component{
-	guard : self.hasStereotype('GaAcqStep') 
-				and self.hasAtLeastOperation(2).size() > 0
-					and self.isInAtLeastOneAlternativeFragment().size() >= 2
-	
+	guard : self.hasStereotype('PaRunTInstance') 
 	critique EP{
 		check{
+			if(self.getOwnedOperations().size() < 2 and
+				self.EP_resDemand()){
+				return true;
+			}
 			return false;
 		}
 		message : 'Extensive Processing for <'+self.type.name+'> '+self.name
@@ -267,14 +90,14 @@ context Component{
 					-----Dynamic-------
 					1. spostare la seconda operazione nella seconda lifeline
 					2. mantenere le due operazioni in un alternative fragment
-				
+				*/
 				
 			}
 		}
 	}
 }
 
-*/
+
 
 
 /*context Artifact {

@@ -1,9 +1,33 @@
-/*operation Component hasAtLeastOperation(numberOfOperation : Integer) : Boolean{
-	if ( self.ownedOperation.size() > numberOfOperation)
+operation Component EP_resDemand() : Boolean{
+	var th_maxOpResDemand : List( Real ) = new List( Real );
+	th_maxOpResDemand.add(0.5); //computation
+	th_maxOpResDemand.add(0.5); //storage
+	th_maxOpResDemand.add(0.5); //bandwidth
+	
+	var th_minOpResDemand : List( Real ) = new List( Real );
+	th_minOpResDemand.add(0.5); //computation
+	th_minOpResDemand.add(0.5); //storage
+	th_minOpResDemand.add(0.5); //bandwidth
+	
+	var listOfOperations = self.getOwnedOperations();
+	
+	var returnValue : List(Operation) = new List(Operation);
+	for(op in listOfOperations){
+		if(op.hasStereotype('GaStep') and op.hasStereotype('GaScenario') ){
+			if(op.FresDemandGreaterOrEqualThan(th_maxOpResDemand) ){
+					opGreater.add(op);
+			}else if (op.FresDemandLesserThan(th_minOpResDemand)){
+				opLesser.add(op);
+			}
+		}
+	}
+	
+	if(opGreater.size() > 0 and opLesser.size() > 0){
 		return true;
-	return false;
-}*/
-
+	}else{
+		return false;
+	}
+}
 
 
 /*
@@ -21,7 +45,6 @@ operation Component hasAtLeastOperation(numberOfOperation : Integer) : List(Life
 	for(lifeline in listOfLifelines){
 		listOfMessages = lifeline.hasAtLeastSendMessage();
 		if ( listOfMessages.size() >= numberOfOperation  ){
-			self.ownedOperation.println();
 			for(message in listOfMessages){		
 				if(self.ownedOperation->exists(
 						property : Property | property == message.getSignature()) ){			

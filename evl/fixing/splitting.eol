@@ -17,39 +17,51 @@ operation Operation splitting(numberOfSplitting : Integer, percentage : Integer)
 }
 
 operation Operation splittingComponent( numberOfSplitting : Integer, percentage : Integer ) : Boolean {	
-	var splittedComponent : Component = self.splitComponent();
-	//sposto l'operazione critica sul nuovo compomente
-	var interaction = self.getAllInteractions()->first();
-	var lifelines = self.class.getLifelines();
-	var sourceLifeline;
+	//static
+	var sourceComponent : Component = self.class;
+	var splittedComponent = self.splitComponent(percentage);
 	
-	var lifeline = interaction.createLifeline(splittedComponent.name+"lifeline");
+	//dynamic
+	var interaction = self.getAllInteractions()->first();
+	var sourceLifeline = sourceComponent.getLifeline(interaction);
+	var lifeline = interaction.createLifeline(splittedComponent.name+"lifeline"); //L2
+	
+	//deploy
+	var listNodesOfSplittedComponent = splittedComponent.getNodes();
+
 	var spProp = interaction.createOwnedAttribute(splittedComponent.name, splittedComponent);
 	lifeline.setRepresents(spProp);
 	
-	var newOperation = self.cloneOperationInto(splittedComponent);
+	splittedComponent.moveOperation(self); //sposta l'operazione sul componente appena creato
 	
-	var newMessage = interaction.createMessage(newOperation.name+"_message");
+	var newMessage = interaction.createMessage(self.name+"_message");
 	
-	for(lf in lifelines){
-		if(lf.namespace == interaction and lf.represents.type == self.class){
-			sourceLifeline = lf;
-			break;
-		}	
-	}
+	lifeline.cloneAppliedStereotypesFrom(sourceLifeline);
+	lifeline.setVisibility(sourceLifeline.getVisibility());
+		
+	var sendMOS : MessageOccurrenceSpecification = new MessageOccurrenceSpecification;
+	var receiveMOS : MessageOccurrenceSpecification = new MessageOccurrenceSpecification;
 	
-	var sendMOS : MessageOccuranceSpecification = new MessageOccuranceSpecification;
-	var receiveMOS : MessageOccuranceSpecification = new MessageOccuranceSpecification;
-	
-	sendMOS.setMessage(newMessage);
-	receiveMOS.setMessage(newMessage);
+	interaction.getFragments().add(sendMOS);
+	interaction.getFragments().add(receiveMOS);
 	
 	newMessage.setSendEvent(sendMOS);
 	newMessage.setReceiveEvent(receiveMOS);
 	
+	var besL2 : BehaviorExecutionSpecification = new BehaviorExecutionSpecification;
+	interaction.getFragments().add(besL2);
 	
+	var messageEnd : ExecutionOccurrenceSpecification = new ExecutionOccurrenceSpecification;
+	interaction.getFragments().add(messageEnd);
 	
-	return splittedComponent.moveOperation(self);
+	besL2.start = receiveMOS ;
+	besL2.finish = messageEnd;
+	
+	lifeline.getCoveredBys().add(besL2);
+	lifeline.getCoveredBys().add(receiveMOS);
+	
+	//return 
+	return true;
 }
 
 operation Operation splittingOperation(numberOfSplitting : Integer, percentage : Integer) : Boolean{

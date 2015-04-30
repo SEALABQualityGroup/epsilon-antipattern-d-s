@@ -14,3 +14,13 @@ operation Package getUsageRelations() : List(Usage){
 operation Package addElement(element : Element){
 	self.packagedElement.add(element);
 }
+
+operation Package getManifestations() : Sequence(Manifestation){
+	var returnValue : Sequence(Manifestation) = new Sequence(Manifestation);
+	for(son in self.getPackagedElements){
+		if(son.isTypeOf(Artifact)){
+			returnValue.addAll(son.getManifestations());
+		}
+	}
+	return returnValue;
+}
