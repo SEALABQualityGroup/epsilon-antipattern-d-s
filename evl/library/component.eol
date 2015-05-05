@@ -220,16 +220,23 @@ operation Component getNearLessUsedNodes() : List(Node){
 	var listOfNearLessUsed : List(Node) = new List(Node);
 	
 	for(node in listOfNode){
-		var listOfNearNode = node.getOwnedLink();
-		var lessNode : Node = listOfNode()->first(); 
+		var listOfNearNode = node.getDirectlyLinkedNode();
+		var lessNode : Node = listOfNode->first(); 
 		var utilization = lessNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
 		if(utilization.isUndefined()) utilization = 0.0; //utilizzazione minima
+		var i : Integer = 0;
 		for(nearNode in listOfNearNode){
-			var nearNodeUtilization =nearNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
-			if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
-				lessNode = nearNode;	
-				utilization = nearNodeUtilization;
+			
+			var stereotype = listOfNode->first().getStereotype("GaExecHost");
+			
+			if( nearNode.hasStereotype("GaExecHost") ){
+				var nearNodeUtilization = nearNode.getValue(stereotype, "utilization")->first();
+				if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
+					lessNode = nearNode;	
+					utilization = nearNodeUtilization;
+				}
 			}
+			i = i+1;
 		}
 		listOfNearLessUsed.add(lessNode);
 	}
@@ -256,4 +263,70 @@ operation Component deployOn(node : Node){
 	newManifestation = newArtifact.createManifestation(self.name, self); 
 	newDeployment = node.createDeployment(newArtifact.name); //creo il deploy sul nodo
 	newDeployment.getDeployedArtifacts().add(newArtifact); //aggiungo al deploy l'artefatto
+}
+
+operation Component getNeighbours() : List(Node){
+	var listOfNode : List(Node) = new List(Node);
+	
+	for(node in self.getNodes()){
+		var nodeOwnedLink = node.getDirectlyLinkedNode();
+		if(nodeOwnedLink.isDefined() and nodeOwnedLink.size() > 0 ){
+			listOfNode.addAll(nodeOwnedLink);
+		}
+	}
+	return listOfNode;
+}
+
+operation Component redeployOn(node : Node, from : Node){
+	var artifact = self.getArtifactOn(from);
+	var deployment = self.getDeploymentOn(from, artifact);
+	deployment.supplier->first().println();
+	node.getDeployments().add(deployment); //sposto l'artefatto dal nodo sorgente al nuovo nodo
+}
+
+operation Component getArtifactOn(node : Node) : Artifact{
+	var deploymentNode: Node; 
+	for (art in self.getAllArtifacts()){
+		deploymentNode = art.getDeploymentNode();
+		if(deploymentNode.isDefined() and deploymentNode == node){
+			return art;
+		}
+	}
+	return null;
+}
+
+operation Component calculateUtilization(){
+	var ownOperations = self.getOperations(); //recupero le operazioni proprie del componente
+	var utilization : Real = new Real;
+	
+	for(op in ownOperations){
+		if(op.hasStereotype("GaStep") and op.getValue(op.getStereotype("GaStep"), "servCount").isDefined()){
+			for(sCount in op.getValue(op.getStereotype("GaStep"), "servCount")){
+				utilization = utilization + sCount.asReal();
+			}
+		}
+	}
+	return utilization;
+}
+
+
+operation Component addUsages(usages : Sequence(Usage)){
+	for(usage in usages){
+		if(usage.isTypeOf(InterfaceRealization)){
+			self.moveInterfaceRealizations(usage);
+		}else if(usage.isTypeOf(InterfaceRealization)){
+			//TODO
+		}
+	}
+}
+
+
+operation Component getDeploymentOn(node : Node, art : Artifact) : Deployment{
+	var returnValue = Deployment.allInstances->selectOne(
+		deployment : Deployment | deployment.client->exists(targetNode : Node | targetNode == node) and deployment.supplier->exists(
+			deployedArtifact : Artifact | deployedArtifact == art
+		)
+	);
+	returnValue.println();
+	return returnValue;
 }

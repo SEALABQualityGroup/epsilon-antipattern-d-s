@@ -10,12 +10,12 @@ operation Node hasDeployment(artifact : Artifact) : Boolean{
 }
 
 //recupero la lista dei nodi connessi al componente
-operation Node getOwnedLink() : List(Node){
+operation Node getDirectlyLinkedNode() : List(Node){
 	var returnValue : List(Node) = new List(Node);
 	
 	//orderedSet
 	for (prop in self.ownedAttribute){
-			returnValue.add(prop);
+		returnValue.add(prop.getType());
 	}
 	return returnValue;
 }
@@ -60,15 +60,15 @@ operation Node cloneLink(listOfLinkedNode : List(Property), packageContainer : P
 		
 		self.ownedAttribute.add(linkedNodeEnd);
 		linkedNodeEnd.name = linkedNode.name;
-		linkedNodeEnd.setType(linkedNode.getType());	
+		linkedNodeEnd.setType(linkedNode);	
 		
-		linkedNode.getType().ownedAttribute.add(selfEnd);
+		linkedNode.ownedAttribute.add(selfEnd);
 		selfEnd.name = self.name;
 		selfEnd.setType(self);
 		
 		packageContainer.addElement(commPath);
 		commPath.name = "A_"+linkedNode.name+"_"+selfEnd.name;
-		commPath.memberEnd.add(linkedNode);
+		commPath.memberEnd.add(linkedNodeEnd);
 		commPath.memberEnd.add(selfEnd);
 	}
 }
@@ -76,7 +76,7 @@ operation Node cloneLink(listOfLinkedNode : List(Property), packageContainer : P
 
 operation Node clone(component : Component){
 		var newNode : Node = new Node; //creo il nuovo nodo
-		var listOfLinkedNode = self.getOwnedLink(); //recupero la lista dei link del nodo
+		var listOfLinkedNode = self.getDirectlyLinkedNode(); //recupero la lista dei link del nodo
 		var packageContainer : Package = self.getNearestPackage();  //recupero il package container
 		newNode.name = self.name+" Splitted";
 		packageContainer.addElement(newNode);
@@ -95,7 +95,7 @@ operation Node clone(component : Component){
 //VALUE zero dello stereotipo
 operation Node clone(component : Component, reduction : Integer){
 		var newNode : Node = new Node; //creo il nuovo nodo
-		var listOfLinkedNode = self.getOwnedLink(); //recupero la lista dei link del nodo
+		var listOfLinkedNode = self.getDirectlyLinkedNode(); //recupero la lista dei link del nodo
 		var packageContainer : Package = self.getNearestPackage();  //recupero il package container
 		newNode.name = self.name+" Splitted";
 		packageContainer.addElement(newNode);

@@ -160,3 +160,65 @@ operation Operation getMessageIn(interaction : Interaction) : Message{
 	var mes = interaction.getMessages()->selectOne(iterator : Message | iterator.getSignature() == self);
 	return mes;
 }
+
+operation Operation getUsages() : List(Usage){
+	return Usage.allInstances->select(usage : Usage |
+				usage.getSuppliers()->exists(supplier : Operation | supplier == self) or
+					usage.getClients()->exists(client : Operation | client == self)
+			);
+}
+
+
+/***********************
+
+	IT MUST BE CHECKED	
+
+************************/
+//FIXME Check the behavior
+operation Operation moveIntoComponent(component : Component){
+	var usages = self.getUsages()->select(usage : Usage | 
+		(usage.getSuppliers().size() == 1 and usage.getSuppliers()->first() == self) or 
+			(usage.getClients().size() == 1 and usage.getClients()->first() == self));
+			
+	component.addUsages(usages);
+	component.moveOperation(self);
+}
+
+operation Operation redeployOnNearLessUsedNode() : Boolean{
+
+	var listOfCriticSourceNode = self.PaF_F_maxHwUtil(); 
+	var listOfNearLessUsed : List(Node) = new List(Node);
+	
+	for(node in listOfCriticSourceNode){
+		var listOfNeighbours = node.getDirectlyLinkedNode(); //lista dei nodi vicini
+		if(listOfNeighbours.isUndefined() or listOfNeighbours.size() == 0){
+			//non esistono vicini al nodo
+			return false;
+			//break;
+		}
+		
+		var lessNode : Node = listOfNeighbours->selectOne(
+			node : Node | node.hasStereotype("GaExecHost") and
+				node.getValue(node.getStereotype("GaExecHost"), "utilization").isDefined()
+		);
+		
+		if(lessNode.isUndefined()) return false;
+		var utilization : Real = lessNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first().asReal();
+		
+		for(neighbour in listOfNeighbours){
+			if(neighbour.hasStereotype("GaExecHost")){
+				var nearNodeUtilization = neighbour.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
+				if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
+					lessNode = nearNode;	
+					utilization = nearNodeUtilization;
+				}
+			}
+		}
+		listOfNearLessUsed.add(lessNode);
+		if(listOfNearLessUsed.isUndefined() or listOfNearLessUsed.size() == 0) return false;
+		self.class.redeployOn(listOfNearLessUsed->first(), node);
+	}
+	//deploy il componente splittato sul primo nodo della lista dei vicini meno utilizzati
+	
+	return true;
+}

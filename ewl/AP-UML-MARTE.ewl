@@ -1,0 +1,77 @@
+import "../evl/antipattern/PaF.eol";
+//import "antipattern/EP.eol";
+
+//libraries
+import "../evl/library/element.eol";
+import "../evl/library/package.eol";
+import "../evl/library/component.eol";
+import "../evl/library/operation.eol";
+import "../evl/library/interaction.eol";
+import "../evl/library/artifact.eol";
+import "../evl/library/manifestation.eol";
+import "../evl/library/node.eol";
+import "../evl/library/lifeline.eol";
+
+//fixing
+import "../evl/fixing/splitting.eol";
+
+
+//FIXING 1
+wizard newComponent {
+	guard : 
+		self.isTypeOf(Operation) and
+			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
+				self.PaF_F_probExec() and 
+					self.PaF_resDemand() and
+						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+					
+	title : "PaF fixing --> move into a new component on new node"
+	do {
+ 		self.moveToNewComponentDeployedOnNewNode(20.0);
+	} 
+}
+
+//FIXING 2
+wizard newComponent_N_L_U_Node {
+	guard : 
+		self.isTypeOf(Operation) and
+			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
+				self.PaF_F_probExec() and 
+					self.PaF_resDemand() and
+						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+					
+	title : "PaF fixing --> move into a new Component on N.L.U Node"
+	do {
+ 		self.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
+	} 
+}
+
+//FIXING 3
+wizard redeployComponent_N_L_U_Node {
+	guard : 
+		self.isTypeOf(Operation) and
+			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
+				self.PaF_F_probExec() and 
+					self.PaF_resDemand() and
+						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+					
+	title : "PaF fixing --> redeploy Component on N_L_U Node"
+	do {
+ 		self.redeployOnNearLessUsedNode(20.0);
+	} 
+}
+
+//FIXING 4
+wizard redeployComponent_N_L_U_Node {
+	guard : 
+		self.isTypeOf(Operation) and
+			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
+				self.PaF_F_probExec() and 
+					self.PaF_resDemand() and
+						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+					
+	title : "PaF fixing --> move into L.U. Component"
+	do {
+ 		self.moveToLessUsedComponent(20.0);
+	} 
+}

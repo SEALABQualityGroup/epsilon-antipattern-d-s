@@ -43,7 +43,6 @@ context Operation {
 			if(self.PaF_F_probExec() and 
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) ){
-							"bingo".println();
 							return false;
 							
 			}
@@ -51,33 +50,37 @@ context Operation {
 		}
 		message : 'PaF <Operation> ' + self.name
 		fix {
-			title : 'New component and new node'
+			title : "move into a new component on new node"
 			do {
-					//TODO pt1
+					//FIXING 1
 					--var numberOfSplitting = UserInput.promptInteger("Indicami il numero di splitting da fare ( default = 1 )", 1);
 					--var percentageOfReduction = UserInput.promptReal("Indicami la percentuale di riduzione (default 0.5)", 50);
 					--self.splitting(numberOfSplitting, percentageOfReduction);
 					--self.splitting(1, 20);
-					self.splittingComponent(20.0);
+					--System.user.inform("test system");
+					self.moveToNewComponentDeployedOnNewNode(20.0);
 			}
 		}
 		fix{
-			title : 'New component and node near less used'
+			title : "move into a new Component on N.L.U Node"
 			do{
-				//TODO pt2
-				self.deployToNodeNearLessUsed();
+				//FIXING 2
+				if(not self.moveToNewComponentDeployedOnNearLessUsedNode(20.0))
+					"there was an error".println();
 			}
 		}
 		fix{
-			title : 'Redeploy component on node Near Less used'
+			title : "redeploy Component on N_L_U Node"
 			do{
-				//TODO pt3
+				//FIXING 3
+				self.redeployOnNearLessUsedNode(20.0);
 			}
 		}
 		fix{
-			title : 'Redeploy on the component less used on node near less used'
+			title : "move into L.U. Component"
 			do{
-				//TODO pt4
+				//FIXING 4
+				self.moveToLessUsedComponent(20.0);
 			}
 		}
 		

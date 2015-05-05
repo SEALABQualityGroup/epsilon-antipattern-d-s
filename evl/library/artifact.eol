@@ -7,3 +7,12 @@ operation Artifact hasRepresentationOf(component : Component) : Boolean {
 	}
 	return false;
 }
+
+operation Artifact getDeploymentNode() : Node{
+	Node.allInstances->first().getDeployments().println();
+	return Node.allInstances->selectOne(node : Node | 
+		node.getDeployments()->exists(deploy : Deployment | 
+			deploy.getDeployedArtifacts()->exists(artifact : Artifact | artifact == self)
+		)
+	);
+}

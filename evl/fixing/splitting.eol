@@ -64,11 +64,17 @@ operation Operation splittingComponent( numberOfSplitting : Integer, percentage 
 	return true;
 }
 
-operation Operation splittingComponent( percentage : Real ) : Boolean {	
+/*********************************************************************************************
+ *																							 *
+ *	 									PAPER												 *
+ *																							 *
+ *********************************************************************************************/
+operation Operation moveToNewComponentDeployedOnNewNode( percentage : Real ) : Boolean {	
 	//static
 	var sourceComponent : Component = self.class;
 	var splittedComponent = self.splitComponent(percentage);
 	
+	//deploy
 	splittedComponent.deployOnNewNodes(sourceComponent);
 	splittedComponent.moveOperation(self); //sposta l'operazione sul componente appena creato
 	
@@ -109,36 +115,110 @@ operation Operation splittingComponent( percentage : Real ) : Boolean {
 	return true;
 }
 
-operation Operation deployOnNearLessUsedNode( percentage : Real ) : Boolean {
+operation Operation moveToNewComponentDeployedOnNearLessUsedNode( percentage : Real ) : Boolean {
+	//static
 	var sourceComponent : Component = self.class;
 	var splittedComponent : Component = self.splitComponent(percentage);
-	var listOfNearLessUsedNode = sourceComponent.getNearLessUsedNode();
+	
+	//deploy
+	var listOfNearLessUsedNode = sourceComponent.getNearLessUsedNodes();
 	
 	//lista dei nodi critici che manifestano il componente con l'op critica
 	var listOfCriticSourceNode = self.PaF_F_maxHwUtil(); 
 	var listOfNearLessUsed : List(Node) = new List(Node);
-	
+		
+	splittedComponent.moveOperation(self);
+	self.reductionServDemand(percentage);
+		
 	for(node in listOfCriticSourceNode){
-		var listOfNeighbours = node.getOwnedLink(); //lista dei nodi vicini
+		var listOfNeighbours = node.getDirectlyLinkedNode(); //lista dei nodi vicini
 		if(listOfNeighbours.isUndefined() or listOfNeighbours.size() == 0){
 			//non esistono vicini al nodo
-			break;
+			return false;
+			//break;
 		}
-		var lessNode : Node = listOfNeighbours()->first(); //il primo nella lista
-		var utilization = lessNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
-		if(utilization.isUndefined()){ 
-			utilization = 0.0; //utilizzazione minima
-		}
-		for(nearNode in listOfNeighbours){
-			var nearNodeUtilization = nearNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
-			if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
-				lessNode = nearNode;	
-				utilization = nearNodeUtilization;
+		
+		var lessNode : Node = listOfNeighbours->selectOne(
+			node : Node | node.hasStereotype("GaExecHost") and
+				node.getValue(node.getStereotype("GaExecHost"), "utilization").isDefined()
+		);
+		
+		if(lessNode.isUndefined()) return false;
+		var utilization : Real = lessNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first().asReal();
+		
+		for(neighbour in listOfNeighbours){
+			if(neighbour.hasStereotype("GaExecHost")){
+				var nearNodeUtilization = neighbour.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
+				if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
+					lessNode = nearNode;	
+					utilization = nearNodeUtilization;
+				}
 			}
 		}
 		listOfNearLessUsed.add(lessNode);
 	}
-	
 	//deploy il componente splittato sul primo nodo della lista dei vicini meno utilizzati
+	if(listOfNearLessUsed.isUndefined() or listOfNearLessUsed.size() == 0) return false;
 	splittedComponent.deployOn(listOfNearLessUsed->first());
+	
+	//dynamic
+	var interaction = self.getAllInteractions()->first();
+	var sourceLifeline = sourceComponent.getLifeline(interaction);
+	var lifeline = interaction.createLifeline(splittedComponent.name+"lifeline"); //L2
+	var newMessage = interaction.createMessage(self.name+"_message");
+	
+	var spProp = interaction.createOwnedAttribute(splittedComponent.name, splittedComponent);
+	
+	var sendMOS : MessageOccurrenceSpecification = new MessageOccurrenceSpecification;
+	var receiveMOS : MessageOccurrenceSpecification = new MessageOccurrenceSpecification;
+	
+	var besL2 : BehaviorExecutionSpecification = new BehaviorExecutionSpecification;
+	var messageEnd : ExecutionOccurrenceSpecification = new ExecutionOccurrenceSpecification;
+	
+	lifeline.setRepresents(spProp);
+	
+	lifeline.cloneAppliedStereotypesFrom(sourceLifeline);
+	lifeline.setVisibility(sourceLifeline.getVisibility());
+	
+	var indexOf : Integer = interaction.getIndexOf(self.getMessageIn(interaction).receiveEvent);
+	interaction.addFragmentAt(sendMOS, indexOf+1);
+	interaction.addFragmentAt(besL2,interaction.getIndexOf(sendMOS)+1);
+	interaction.addFragmentAt(receiveMOS, interaction.getIndexOf(besL2)+1);
+	interaction.addFragmentAt(messageEnd, interaction.getIndexOf(receiveMOS)+1);
+	
+	newMessage.setSendEvent(sendMOS);
+	newMessage.setReceiveEvent(receiveMOS);
+	
+	besL2.start = receiveMOS ;
+	besL2.finish = messageEnd;
+	
+	lifeline.getCoveredBys().add(besL2);
+	lifeline.getCoveredBys().add(receiveMOS);
+	
+	return true;
+}
+
+
+operation Operation redeployOnNearLessUsedNode( percentage : Real ) : Boolean {
+	var sourceComponent = self.class;
+	var listOfSourceNode = sourceComponent.getNodes();
+	
+	return self.redeployOnNearLessUsedNode();
+}
+
+
+operation Operation moveToLessUsedComponent( percentage : Real ) : Boolean{
+	//TODO
+	var lessUsedComponent : Component = Component.allInstances->first();
+	
+	for(component in Component.allInstances){
+		if( component.calculateUtilization() < lessUsedComponent.calculateUtilization() ){
+			lessUsedComponent = component;
+		}
+	}
+	
+	if(lessUsedComponent <> self.class){
+		lessUsedComponent.println();
+		self.moveIntoComponent(lessUsedComponent);
+	}
 }
