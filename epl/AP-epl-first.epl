@@ -26,11 +26,29 @@ pattern newComponent
 					op.PaF_resDemand() and
 						(op.PaF_F_throughtput().size() > 0 or op.PaF_F_maxHwUtil().size() > 0 ){ 
 					
-	match : "PaF fixing --> move into a new component on new node"
-	do {
-		system.user.infrom("ciao");
+	onmatch {
+		var message = "fai la scelta: 0- move into a new component on new node; 1- move into a new Component on N.L.U Node; 2- redeploy Component on N_L_U Node; 3- move into L.U. Component;";
+		var caseValue = UserInput.promptInteger(message, 0);
+	
+		switch (caseValue) {
+			case "1" : 
+				op.moveToNewComponentDeployedOnNewNode(20.0);
+			case "2" :
+				op.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
+			case "3" : 
+				 op.moveToLessUsedComponent(20.0);
+			default:
+				op.moveToNewComponentDeployedOnNewNode(20.0);
+		}
+		//op.moveToNewComponentDeployedOnNewNode(20.0);
+	}
+	nomatch{
+		"AntiPattern free".println();
+		op.name.println();
+	}
+	/*do {
  		op.moveToNewComponentDeployedOnNewNode(20.0);
-	} 
+	} */
 }
 
 /*
