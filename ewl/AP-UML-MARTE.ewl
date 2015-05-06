@@ -55,7 +55,7 @@ wizard redeployComponent_N_L_U_Node {
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
 					
-	title : "PaF fixing --> redeploy Component on N_L_U Node"
+	title : "PaF fixing --> redeploy Component on N.L.U. Node"
 	do {
  		self.redeployOnNearLessUsedNode(20.0);
 	} 
