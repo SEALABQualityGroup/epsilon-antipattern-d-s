@@ -23,7 +23,7 @@ wizard newComponent {
 			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
 				self.PaF_F_probExec() and 
 					self.PaF_resDemand() and
-						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() ) 
 					
 	title : "Move it to a new Component deployed to a new Node"
 	do {
@@ -38,7 +38,7 @@ wizard newComponent_N_L_U_Node {
 			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
 				self.PaF_F_probExec() and 
 					self.PaF_resDemand() and
-						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() )  
 					
 	title : "Move it to a new Component deployed to the less used neighbour Node"
 	do {
@@ -53,9 +53,9 @@ wizard redeployComponent_N_L_U_Node {
 			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
 				self.PaF_F_probExec() and 
 					self.PaF_resDemand() and
-						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() ) 
 					
-	title : "Redeploy its owning Component "+self.class+" to the less used neighbour Node"
+	title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
 	do {
  		self.redeployOnNearLessUsedNode(20.0);
 	} 
@@ -68,9 +68,9 @@ wizard redeployComponent_N_L_U_Node {
 			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
 				self.PaF_F_probExec() and 
 					self.PaF_resDemand() and
-						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
+						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() ) 
 					
-	title : "Change its owning Component from "+self.class+" to the one with the lowest demand"
+	title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 	do {
  		self.moveToLessUsedComponent(20.0);
 	} 
