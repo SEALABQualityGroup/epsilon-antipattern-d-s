@@ -25,7 +25,7 @@ wizard newComponent {
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
 					
-	title : "PaF fixing --> move into a new component on new node"
+	title : "Move it to a new Component deployed to a new Node"
 	do {
  		self.moveToNewComponentDeployedOnNewNode(20.0);
 	} 
@@ -40,7 +40,7 @@ wizard newComponent_N_L_U_Node {
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
 					
-	title : "PaF fixing --> move into a new Component on N.L.U Node"
+	title : "Move it to a new Component deployed to the less used neighbour Node"
 	do {
  		self.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
 	} 
@@ -55,7 +55,7 @@ wizard redeployComponent_N_L_U_Node {
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
 					
-	title : "PaF fixing --> redeploy Component on N.L.U. Node"
+	title : "Redeploy its owning Component "+self.class+" to the less used neighbour Node"
 	do {
  		self.redeployOnNearLessUsedNode(20.0);
 	} 
@@ -70,7 +70,7 @@ wizard redeployComponent_N_L_U_Node {
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) 
 					
-	title : "PaF fixing --> move into L.U. Component"
+	title : "Change its owning Component from "+self.class+" to the one with the lowest demand"
 	do {
  		self.moveToLessUsedComponent(20.0);
 	} 

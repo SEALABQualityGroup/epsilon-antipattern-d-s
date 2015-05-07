@@ -10,6 +10,7 @@ operation Component Blob_static_controller() : Boolean {
 	-- Th_maxConnects = 5
 	var Th_maxConnects : Real := 4.0;  
 	var supplierNeighbours := self.getSupplierNeighboursConnectedToSelfByThConnectsConnectionsAtLeast(Th_maxConnects);
+	supplierNeighbours->isEmpty();
 	return
 		supplierNeighbours->isEmpty();
 }
@@ -25,7 +26,8 @@ operation Component Blob_static_controlled() : Boolean {
 //true se sono vere centralized and distributed
 //false se not centralized or not distributed
 operation Component Blob_deployment() : Boolean {
-	return self.Blob_deployment_centralized() and self.Blob_deployment_distributed();
+	--return self.Blob_deployment_centralized() and self.Blob_deployment_distributed();
+	return false;
 }
 
 //true se il nodo su cui sta non ha una util alta o se non � in compagnia di altre components con tante connessioni

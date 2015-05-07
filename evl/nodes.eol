@@ -1,9 +1,11 @@
 operation Node CPS_deployment_queue() : Boolean {
 	var Th_maxQL : Real := 70.0;
-	if (self.hasValue(self.getStereotype('RtBehavior'), 'queueSize')) 
+	/*if (self.hasValue(self.getStereotype('RtBehavior'), 'queueSize')) 
 		return self.getValue(self.getStereotype('RtBehavior'), 'queueSize').asReal() < Th_maxQL;
 	else
 		return true;
+	*/
+	return false;
 }
 
 operation Node CPS_deployment_unbalancedNodes() : Boolean {
@@ -11,7 +13,7 @@ operation Node CPS_deployment_unbalancedNodes() : Boolean {
 	var Th_minHwUtil : Real := 0.3;
 	var selfUtil : Real := 0.0;	
 	var selfNeighboursWithLowUtil := Sequence{};
-	if (self.hasStereotype('GaExecHost') and self.hasValue(self.getStereotype('GaExecHost'), 'utilization')) 
+	/*if (self.hasStereotype('GaExecHost') and self.hasValue(self.getStereotype('GaExecHost'), 'utilization')) 
 			selfUtil := self.getValue(self.getStereotype('GaExecHost'), 'utilization')->first().asReal();
 	if(selfUtil >= Th_maxHwUtil) {
 		var selfNeighbours := self.getNodeNeighbours();
@@ -23,4 +25,6 @@ operation Node CPS_deployment_unbalancedNodes() : Boolean {
 	else
 		return true;
 	return selfNeighboursWithLowUtil->isEmpty();
+	*/
+	return false;
 }

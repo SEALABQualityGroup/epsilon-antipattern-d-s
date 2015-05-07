@@ -1,7 +1,8 @@
 //true se sono vere controller and controlled
 //false se not controller or not controlled
 operation Artifact Blob_static() : Boolean {
-	return self.Blob_static_controller() and self.Blob_static_controlled();
+	--return self.Blob_static_controller() and self.Blob_static_controlled();
+	return false;
 }
 
 //true se non ha molte connessioni come client verso altre componenti
@@ -24,7 +25,8 @@ operation Artifact Blob_static_controlled() : Boolean {
 //true se sono vere centralized and distributed
 //false se not centralized or not distributed
 operation Artifact Blob_deployment() : Boolean {
-	return self.Blob_deployment_centralized() and self.Blob_deployment_distributed();
+	--return self.Blob_deployment_centralized() and self.Blob_deployment_distributed();
+	return false;
 }
 
 //true se il nodo su cui sta non ha una util alta o se non � in compagnia di altre components con tante connessioni

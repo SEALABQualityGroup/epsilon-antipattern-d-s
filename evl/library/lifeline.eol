@@ -31,7 +31,6 @@ operation Lifeline getBESStartedBy(mos : MessageOccurrenceSpecification) : Behav
 	);
 }
 
-
 operation Lifeline removeCovered(fragment : InteractionFragment){
 	self.getCoveredBys().remove(fragment);
 }

@@ -1,0 +1,7 @@
+operation Artifact getManifestedComponentStereotyped(stereotype : String) : Set(Component){
+		
+	return self.getManifestations()->select(
+		manifestation : Manifestation | 
+			manifestation.utilizedElement->exists(component : Component | component.hasStereotype(stereotype))
+		);	
+}

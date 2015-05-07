@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////// ANTIPATTERN RULES ///////////////////////////////////////////////////////
-/*import "components.eol";
+import "components.eol";
 import "artifacts.eol";
 import "nodes.eol";
 
@@ -8,9 +8,9 @@ import "supportingOperation.eol";
 import "supportingComponents.eol";
 import "supportingArtifacts.eol"; 
 import "supportingNodes.eol";
-*/
 
 import "antipattern/PaF.eol";
+import "antipattern/Blob.eol";
 //import "antipattern/EP.eol";
 
 
@@ -50,19 +50,14 @@ context Operation {
 		}
 		message : 'PaF <Operation> ' + self.name
 		fix {
-			title : "move into a new component on new node"
+			title : "Move it to a new Component deployed to a new Node"
+			
 			do {
-					//FIXING 1
-					--var numberOfSplitting = UserInput.promptInteger("Indicami il numero di splitting da fare ( default = 1 )", 1);
-					--var percentageOfReduction = UserInput.promptReal("Indicami la percentuale di riduzione (default 0.5)", 50);
-					--self.splitting(numberOfSplitting, percentageOfReduction);
-					--self.splitting(1, 20);
-					--System.user.inform("test system");
 					self.moveToNewComponentDeployedOnNewNode(20.0);
 			}
 		}
 		fix{
-			title : "move into a new Component on N.L.U Node"
+			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
 				//FIXING 2
 				if(not self.moveToNewComponentDeployedOnNearLessUsedNode(20.0))
@@ -70,14 +65,14 @@ context Operation {
 			}
 		}
 		fix{
-			title : "redeploy Component on N.L.U. Node"
+			title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
 			do{
 				//FIXING 3
 				self.redeployOnNearLessUsedNode(20.0);
 			}
 		}
 		fix{
-			title : "move into L.U. Component"
+			title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 			do{
 				//FIXING 4
 				self.moveToLessCriticalComponent(20.0);
@@ -87,51 +82,11 @@ context Operation {
 	}
 }
 
-/*
-	Extensive Processing Antipattern Detection and Validation
 
-context Component{
-	guard : self.hasStereotype('PaRunTInstance') 
-	critique EP{
-		check{
-			if(self.getOwnedOperations().size() < 2 and
-				self.EP_resDemand()){
-				return true;
-			}
-			return false;
-		}
-		message : 'Extensive Processing for <'+self.type.name+'> '+self.name
-		fix{
-			title : "Fix title"
-			do{
-				//TODO
-				/*
-					------Static------
-					1. creare un nuovo componente
-					2. spostare la seconda operatione nel nuovo componente
-						
-					------Deploy -----
-					1. creare un nuovo nodo
-					2. deployare il nuovo componente sul nuovo nodo
-								
-					-----Dynamic-------
-					1. spostare la seconda operazione nella seconda lifeline
-					2. mantenere le due operazioni in un alternative fragment
-			
-				
-			}
-		}
-	}
-}
-
-
-
-
-/*context Artifact {
+context Artifact {
 	
-	guard : self.getManifestedComponent().isDefined() 
-				and self.getManifestedComponent().hasStereotype('PaRunTInstance')
-				
+	guard : (not self.getManifestedComponentStereotyped("PaRunTInstance").isEmpty())
+				//and self.getManifestedComponent().hasStereotype('PaRunTInstance')
 	critique Blob {
 		check {
 			--return self.satisfies('Blob_static') and self.satisfies('Blob_deployment');
@@ -200,6 +155,44 @@ context Node {
 				deployedArtifacts.add(criticalArtifactCopy);
 				newDeployment.deployedArtifact = deployedArtifacts;
 				selfCopy.deployment->add(newDeployment);
+			}
+		}
+	}
+}
+
+
+/*
+	Extensive Processing Antipattern Detection and Validation
+
+context Component{
+	guard : self.hasStereotype('PaRunTInstance') 
+	critique EP{
+		check{
+			if(self.getOwnedOperations().size() < 2 and
+				self.EP_resDemand()){
+				return true;
+			}
+			return false;
+		}
+		message : 'Extensive Processing for <'+self.type.name+'> '+self.name
+		fix{
+			title : "Fix title"
+			do{
+				//TODO
+				/*
+					------Static------
+					1. creare un nuovo componente
+					2. spostare la seconda operatione nel nuovo componente
+						
+					------Deploy -----
+					1. creare un nuovo nodo
+					2. deployare il nuovo componente sul nuovo nodo
+								
+					-----Dynamic-------
+					1. spostare la seconda operazione nella seconda lifeline
+					2. mantenere le due operazioni in un alternative fragment
+			
+				
 			}
 		}
 	}

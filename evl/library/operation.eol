@@ -243,9 +243,9 @@ operation Operation dynamicFixing(component : Component) {
 	interaction.addFragmentAt(besL2,indexOf+1);
 	interaction.addFragmentAt(messageEnd, interaction.getIndexOf(besL2)+1);
 	
-	sourceLifeline.removeInteractionFragment(self.getMessageFrom(interaction).getReceiveEvent());
+	sourceLifeline.removeInteractionFragment(self.getMessageIn(interaction).getReceiveEvent());
 	
-	besL2.start = self.getMessageFrom(interaction).getReceiveEvent();
+	besL2.start = self.getMessageIn(interaction).getReceiveEvent();
 	besL2.finish = messageEnd;
 	
 	lifeline.getCoveredBys().add(self.getMessageIn(interaction).getReceiveEvent());

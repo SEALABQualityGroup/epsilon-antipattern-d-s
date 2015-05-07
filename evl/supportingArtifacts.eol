@@ -9,8 +9,8 @@ operation Artifact getManifestedComponents() : Sequence(Component) {
 
 //WARNING manifestation->first() is not defined
 operation Artifact getManifestedComponent() : Component {
-	//if(self.manifestation->first().isDefined())
-		return Component.allInstances->select(c | self.manifestation->first().utilizedElement == c)->first();
+	return Component.allInstances->select(c : Component | 
+		not self.getManifestations().isEmpty() and self.getManifestations()->first().getUtilizedElement() == c)->first();
 }
 //WARNING
 
