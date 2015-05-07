@@ -1,3 +1,37 @@
 operation Lifeline getIndexReceiveMOS(message : Message) : MessageOccuranceSpecification{
 	//TODO
 }
+
+operation Lifeline getBESInitializedBy(op : Operation) : BehaviorExecutionSpecification {
+
+	return BehaviorExecutionSpecification.allInstances->selectOne(
+		bes : BehaviorExecutionSpecification | 
+			bes.getCovereds()->first() == self and 
+				bes.getStart() == op.getMessageIn(self.getInteraction()).getReceiveEvent()		
+	);
+	
+}
+
+operation Lifeline removeInteractionFragment(mes : InteractionFragment){
+	self.getCoveredBys().remove(mes);
+}
+
+
+operation Lifeline getNextIncomingMessageStartingFrom() : Sequence (Message){
+	
+	return Message.allInstances->select(
+		mes : Message | self.getCoveredBys()->exists(mes.getReceiveEvent()) 
+	);
+}
+
+
+operation Lifeline getBESStartedBy(mos : MessageOccurrenceSpecification) : BehaviorExecutionSpecification{
+	return self.getCoveredBys()->selectOne(
+		iterator : InteractionFragment | iterator.isTypeOf(BehaviorExecutionSpecification) and iterator.getStart() == mos
+	);
+}
+
+
+operation Lifeline removeCovered(fragment : InteractionFragment){
+	self.getCoveredBys().remove(fragment);
+}

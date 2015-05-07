@@ -23,3 +23,14 @@ operation Interaction getIndexOf(fragment : InteractionFragment) : Integer{
 operation Interaction addFragmentAt(fragment : InteractionFragment, indexOf : Integer){
 	self.getFragments().add(indexOf,fragment);
 }
+
+operation Interaction removeLifelineOf(component : Component) {
+	self.getLifelines().remove(component.getLifeline(self));
+}
+
+
+operation Interaction getComponentLifeline(component : Component){
+	return self.getLifelines()->selectOne(
+		lifeline : Lifeline | lifeline.getRepresents() == component.getAllInteractionProperties()->first()
+	);
+}

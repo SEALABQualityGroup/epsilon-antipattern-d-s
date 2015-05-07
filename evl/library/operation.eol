@@ -222,3 +222,32 @@ operation Operation redeployOnNearLessUsedNode() : Boolean{
 	
 	return true;
 }
+
+//individuare un nome migliore :)
+operation Operation dynamicFixing(component : Component) {
+	var interaction = self.getAllInteractions()->first();
+	var sourceLifeline = component.getLifeline(interaction);
+	var lifeline = interaction.createLifeline(self.class.name+"lifeline"); //L2
+	
+	var spProp = interaction.createOwnedAttribute(self.class.name, self.class);
+	
+	var besL2 : BehaviorExecutionSpecification = new BehaviorExecutionSpecification;
+	var messageEnd : ExecutionOccurrenceSpecification = new ExecutionOccurrenceSpecification;
+	
+	lifeline.setRepresents(spProp);
+	
+	lifeline.cloneAppliedStereotypesFrom(sourceLifeline);
+	lifeline.setVisibility(sourceLifeline.getVisibility());
+	
+	var indexOf : Integer = interaction.getIndexOf(self.getMessageIn(interaction).getReceiveEvent());
+	interaction.addFragmentAt(besL2,indexOf+1);
+	interaction.addFragmentAt(messageEnd, interaction.getIndexOf(besL2)+1);
+	
+	sourceLifeline.removeInteractionFragment(self.getMessageFrom(interaction).getReceiveEvent());
+	
+	besL2.start = self.getMessageFrom(interaction).getReceiveEvent();
+	besL2.finish = messageEnd;
+	
+	lifeline.getCoveredBys().add(self.getMessageIn(interaction).getReceiveEvent());
+	lifeline.getCoveredBys().add(besL2);
+}

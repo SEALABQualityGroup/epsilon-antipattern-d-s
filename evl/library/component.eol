@@ -330,3 +330,13 @@ operation Component getDeploymentOn(node : Node, art : Artifact) : Deployment{
 	returnValue.println();
 	return returnValue;
 }
+
+
+operation Component createLifelineInto(interaction : Interaction) : Lifeline {
+	var lifeline = interaction.createLifeline(self.name+"lifeline"); //L2
+	
+	var spProp = interaction.createOwnedAttribute(self.name, self);
+	lifeline.setRepresents(spProp);
+	
+	return lifeline;
+}

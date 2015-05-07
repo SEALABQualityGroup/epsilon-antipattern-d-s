@@ -5,6 +5,7 @@
 */
 //clone gli stereotipi
 operation Element cloneAppliedStereotypesFrom(element : Element) {
+	element.println();
 	for(stereotype in element.getAppliedStereotypes()){
 		self.applyStereotype(stereotype);
 		if(stereotype.name <> "RtUnit") 
