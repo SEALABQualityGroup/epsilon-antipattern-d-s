@@ -9,10 +9,13 @@ operation Artifact hasRepresentationOf(component : Component) : Boolean {
 }
 
 operation Artifact getDeploymentNode() : Node{
-	Node.allInstances->first().getDeployments().println();
 	return Node.allInstances->selectOne(node : Node | 
 		node.getDeployments()->exists(deploy : Deployment | 
 			deploy.getDeployedArtifacts()->exists(artifact : Artifact | artifact == self)
 		)
 	);
+}
+
+operation Artifact getManifestedComponents() : Sequence(Component){
+	self.getManifestations()->select(man : Manifestation | man.getUtilizedElement().isTypeOf(Component) );
 }

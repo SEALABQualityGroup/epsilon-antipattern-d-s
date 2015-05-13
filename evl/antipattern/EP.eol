@@ -150,9 +150,6 @@ operation Component isInAtLeastOneAlternativeFragment () : List(Message){
 						for (operand in listOfOperands){
 							var listOfMessagesIntoOperand = operand.getFragments();
 							for (cOperation in componentOperations ){
-								self.name.println();
-								cOperation.getSendEvent().id.println();
-								operand.id.println();
 								if (cOperation.getSendEvent() == operand){
 									listOfOperationIntoOperand.add(cOperation);	
 								}	

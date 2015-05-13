@@ -10,7 +10,8 @@ import "supportingArtifacts.eol";
 import "supportingNodes.eol";
 
 import "antipattern/PaF.eol";
-import "antipattern/Blob.eol";
+import "antipattern/CPS.eol";
+//import "antipattern/Blob.eol";
 //import "antipattern/EP.eol";
 
 
@@ -35,9 +36,9 @@ import "fixing/splitting.eol";
 /**
 	Pipe and Filter Antipattern Detection and Validation
 */
+
+// no parametro negli spostamenti
 context Operation {
-	guard : self.hasStereotype('GaStep') and self.hasStereotype('GaScenario')
-	
 	critique PaF {
 		check {
 			if(self.PaF_F_probExec() and 
@@ -53,14 +54,14 @@ context Operation {
 			title : "Move it to a new Component deployed to a new Node"
 			
 			do {
-					self.moveToNewComponentDeployedOnNewNode(20.0);
+					self.moveToNewComponentDeployedOnNewNode(); 
 			}
 		}
 		fix{
 			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
 				//FIXING 2
-				if(not self.moveToNewComponentDeployedOnNearLessUsedNode(20.0))
+				if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
 					"there was an error".println();
 			}
 		}
@@ -68,21 +69,45 @@ context Operation {
 			title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
 			do{
 				//FIXING 3
-				self.redeployOnNearLessUsedNode(20.0);
+				self.redeployOnNearLessUsedNode();
 			}
 		}
 		fix{
 			title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 			do{
 				//FIXING 4
-				self.moveToLessCriticalComponent(20.0);
+				self.moveToLessCriticalComponent();
 			}
 		}
 		
 	}
 }
 
+/*
 
+*/
+context Node {
+	critique CPS {
+		check {
+			if(self.F_maxQl() and self.F_HwUtil())
+				return false;
+			return true;
+		}
+		message : 'CPS <' + self.type.name + '> ' + self.name
+		fix {
+			//FIXING 3
+			title : "prendo il componente critico e lo sposto su un nuovo nodo"
+			do {
+				self.moveTheCriticalComponentToNewNode(); 
+			}
+		}
+	}
+}
+
+
+/*
+	BLOB
+*
 context Artifact {
 	
 	guard : (not self.getManifestedComponentStereotyped("PaRunTInstance").isEmpty())
@@ -120,46 +145,7 @@ context Artifact {
 		}
 	}
 }
-
-context Node {
-	guard : self.hasStereotype('GaExecHost')
-	critique CPS {
-		check {
-			return self.CPS_deployment_queue() or 
-				   self.CPS_deployment_unbalancedNodes();
-		}
-		message : 'CPS <' + self.type.name + '> ' + self.name
-		fix {
-			guard : self.hasCriticalArtifact() and 
-					self.getUnbalancedNodes().isDefined() and 
-					self.getUnbalancedNodes().getLessUsedNode().isDefined()
-			title : 'Redeploy the critical Artifact on the less used CPS Node'
-			do {
-				var criticalArtifact := self.getCriticalArtifact();
-				var lessUsedNode : Node := self.getUnbalancedNodes().getLessUsedNode();
-				var deployment := self.deployment->selectOne(d | d.getDeployedArtifacts()
-															->includes(criticalArtifact));
-				self.deployment->remove(deployment);
-				lessUsedNode.deployment->add(deployment);
-			}
-		}
-		fix {
-			guard : self.hasCriticalArtifact()
-			title : 'Mirror the critical Artifact on a clone of the CPS Node'
-			do {
-				var criticalArtifact := self.getCriticalArtifact();
-				var criticalArtifactCopy := criticalArtifact.clone();
-				var selfCopy := self.clone();
-				var newDeployment := new Deployment;
-				var deployedArtifacts := new Sequence;
-				deployedArtifacts.add(criticalArtifactCopy);
-				newDeployment.deployedArtifact = deployedArtifacts;
-				selfCopy.deployment->add(newDeployment);
-			}
-		}
-	}
-}
-
+*/
 
 /*
 	Extensive Processing Antipattern Detection and Validation

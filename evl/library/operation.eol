@@ -110,7 +110,7 @@ operation Operation getUseCases() : List(UseCase){
 }
 
 //splitta il componente
-operation Operation splitComponent(reduction : Real) : Component{
+operation Operation splitComponent() : Component{
 	
 	var selfComponent = self.class; //recupero il componente che possiede l'operazione critica
 	var selfPackage = self.getNearestPackage(); //recupero il package contenitore dell'operazione critica
@@ -121,12 +121,9 @@ operation Operation splitComponent(reduction : Real) : Component{
 	splittedComponent.cloneAppliedStereotypesFrom(selfComponent); //clono gli stessi stereotipi del componente sorgente
 	
 	splittedComponent.moveInterfacesRealizationFrom(selfComponent, self);
-	--splittedComponent.moveInterfacesUsedFrom(selfComponent, self);
 	
 	var listOfUsedProvidedInterfaces : List(Interface) = selfComponent.getAllUsedIntefacesRequiredsBy(self); //TODO vedere il nuovo modello
-	
-	splittedComponent.reductionServDemand(reduction);
-	
+
 	return splittedComponent;
 }
 

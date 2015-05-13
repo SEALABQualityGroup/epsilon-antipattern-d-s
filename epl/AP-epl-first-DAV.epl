@@ -23,7 +23,7 @@ pattern Move_it_to_a_new_Component_deployed_to_a_new_Node
 		mainRole.PaF_resDemand() and
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() )  				
 	do {
-		UserInput.inform("The Operation named <"+mainRole.name+"> is a Paf! The solution will be applied!");
+		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
 		mainRole.moveToNewComponentDeployedOnNewNode(20.0);
 	}
 }
@@ -36,7 +36,7 @@ pattern Move_it_to_a_new_Component_deployed_to_the_less_used_neighbour_Node
 		mainRole.PaF_resDemand() and
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
 	do {
-		UserInput.inform("The Operation named <"+mainRole.name+"> is a Paf! The solution will be applied!");
+		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
 		mainRole.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
 	}
 }
@@ -49,7 +49,7 @@ pattern Redeploy_owner_Component_to_the_less_used_neighbour_Node
 		mainRole.PaF_resDemand() and
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
 	do {
-		UserInput.inform("The Operation named <"+mainRole.name+"> is a Paf! The solution will be applied!");
+		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
 		mainRole.redeployOnNearLessUsedNode(20.0);
 	}
 }
@@ -62,7 +62,7 @@ pattern Move_it_to_the_less_critical_Component
 		mainRole.PaF_resDemand() and
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
 	do {
-		UserInput.inform("The Operation named <"+mainRole.name+"> is a Paf! The solution will be applied!");
+		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
 		mainRole.moveToLessCriticalComponent(20.0);
 	}
 }

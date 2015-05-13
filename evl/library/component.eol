@@ -280,7 +280,6 @@ operation Component getNeighbours() : List(Node){
 operation Component redeployOn(node : Node, from : Node){
 	var artifact = self.getArtifactOn(from);
 	var deployment = self.getDeploymentOn(from, artifact);
-	deployment.supplier->first().println();
 	node.getDeployments().add(deployment); //sposto l'artefatto dal nodo sorgente al nuovo nodo
 }
 
@@ -295,20 +294,41 @@ operation Component getArtifactOn(node : Node) : Artifact{
 	return null;
 }
 
-operation Component calculateUtilization(){
+operation Component calculateUtilization() : Sequence(Real){
 	var ownOperations = self.getOperations(); //recupero le operazioni proprie del componente
-	var utilization : Real = new Real;
+	var utilization : Sequence(Real) = new Sequence(Real);
+	
+	var computationUtilization : Real = 0.0;
+	var storageUtilization : Real = 0.0;
+	var bandwidthUtilization : Real = 0.0;
 	
 	for(op in ownOperations){
 		if(op.hasStereotype("GaStep") and op.getValue(op.getStereotype("GaStep"), "servCount").isDefined()){
-			for(sCount in op.getValue(op.getStereotype("GaStep"), "servCount")){
-				utilization = utilization + sCount.asReal();
+			var sCount = op.getValue(op.getStereotype("GaStep"), "servCount");
+			if(not sCount.isEmpty()){
+				computationUtilization = computationUtilization + sCount.at(0).asReal(); //computation
+				storageUtilization = storageUtilization + sCount.at(1).asReal(); //storage
+				bandwidthUtilization = bandwidthUtilization + sCount.at(2).asReal(); //bandwidth
 			}
 		}
 	}
+	utilization.add(0,computationUtilization);
+	utilization.add(1,storageUtilization);
+	utilization.add(2,bandwidthUtilization);
+	
 	return utilization;
 }
 
+
+operation Component calculateTotalUtilization() : Real{
+	var totUtilization : Real = 0.0;
+	var i : Integer = 0;
+	for (utl in self.calculateUtilization()){
+		totUtilization = totUtilization + utl;
+		i = i + 1;
+	}
+	return (totUtilization / i.asReal());
+}
 
 operation Component addUsages(usages : Sequence(Usage)){
 	for(usage in usages){
@@ -327,16 +347,14 @@ operation Component getDeploymentOn(node : Node, art : Artifact) : Deployment{
 			deployedArtifact : Artifact | deployedArtifact == art
 		)
 	);
-	returnValue.println();
 	return returnValue;
 }
-
 
 operation Component createLifelineInto(interaction : Interaction) : Lifeline {
 	var lifeline = interaction.createLifeline(self.name+"lifeline"); //L2
 	
 	var spProp = interaction.createOwnedAttribute(self.name, self);
 	lifeline.setRepresents(spProp);
-	
+		
 	return lifeline;
 }

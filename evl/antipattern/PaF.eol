@@ -41,13 +41,15 @@ operation Operation PaF_F_probExec() : Boolean{
 	
 	var turnback = false;
 	
+	if(not self.hasStereotype('GaStep') and not self.hasStereotype('GaScenario'))
+		return false;
+		
 	var gaStep = self.getStereotype('GaStep');
 	var probability = self.getValue(gaStep, 'prob');
 	
 	if(probability.asReal() == th_probability){
 		turnback = true;
 	}
-	
 	return turnback;
 }
 

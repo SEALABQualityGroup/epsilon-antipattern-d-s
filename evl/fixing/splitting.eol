@@ -69,10 +69,10 @@ operation Operation splittingComponent( numberOfSplitting : Integer, percentage 
  *	 									PAPER												 *
  *																							 *
  *********************************************************************************************/
-operation Operation moveToNewComponentDeployedOnNewNode( percentage : Real ) : Boolean {	
+operation Operation moveToNewComponentDeployedOnNewNode() : Boolean {	
 	//static
 	var sourceComponent : Component = self.class;
-	var splittedComponent = self.splitComponent(percentage);
+	var splittedComponent = self.splitComponent();
 	
 	//deploy
 	splittedComponent.deployOnNewNodes(sourceComponent);
@@ -84,10 +84,10 @@ operation Operation moveToNewComponentDeployedOnNewNode( percentage : Real ) : B
 	return true;
 }
 
-operation Operation moveToNewComponentDeployedOnNearLessUsedNode( percentage : Real ) : Boolean {
+operation Operation moveToNewComponentDeployedOnNearLessUsedNode() : Boolean {
 	//static
 	var sourceComponent : Component = self.class;
-	var splittedComponent : Component = self.splitComponent(percentage);
+	var splittedComponent : Component = self.splitComponent();
 	
 	//deploy
 	var listOfNearLessUsedNode = sourceComponent.getNearLessUsedNodes();
@@ -97,7 +97,7 @@ operation Operation moveToNewComponentDeployedOnNearLessUsedNode( percentage : R
 	var listOfNearLessUsed : List(Node) = new List(Node);
 		
 	splittedComponent.moveOperation(self);
-	self.reductionServDemand(percentage);
+	//self.reductionServDemand(percentage);
 		
 	for(node in listOfCriticSourceNode){
 		var listOfNeighbours = node.getDirectlyLinkedNode(); //lista dei nodi vicini
@@ -137,7 +137,7 @@ operation Operation moveToNewComponentDeployedOnNearLessUsedNode( percentage : R
 }
 
 
-operation Operation redeployOnNearLessUsedNode( percentage : Real ) : Boolean {
+operation Operation redeployOnNearLessUsedNode() : Boolean {
 	var sourceComponent = self.class;
 	var listOfSourceNode = sourceComponent.getNodes();
 	
@@ -145,7 +145,7 @@ operation Operation redeployOnNearLessUsedNode( percentage : Real ) : Boolean {
 }
 
 
-operation Operation moveToLessCriticalComponent( percentage : Real ) : Boolean{
+operation Operation moveToLessCriticalComponent() : Boolean{
 	//TODO
 	var lessUsedComponent : Component = Component.allInstances->first();
 	var sourceComponent : Component = self.class;
@@ -185,6 +185,4 @@ operation Operation moveToLessCriticalComponent( percentage : Real ) : Boolean{
 	sourceLifeline.removeCovered(message.getReceiveEvent());
 	//sourceLifeline.removeCovered(sourceBES);
 	sourceLifeline.removeCovered(sourceBES.getFinish());
-	
-	
 }

@@ -5,7 +5,6 @@
 */
 //clone gli stereotipi
 operation Element cloneAppliedStereotypesFrom(element : Element) {
-	element.println();
 	for(stereotype in element.getAppliedStereotypes()){
 		self.applyStereotype(stereotype);
 		if(stereotype.name <> "RtUnit") 
@@ -36,18 +35,14 @@ operation Element getStereotype(stereotypeName : String) : Stereotype {
 }
 
 operation Element reductionServDemand(percentage : Real){
-	self.println();
 	if(self.hasStereotype("GaStep")){
 		var stereotype = self.getStereotype("GaStep");
 		var newValue : Sequence(String) = new Sequence(String);
 		var servCountValues = self.getValue(stereotype, "servCount");
-		servCountValues.println();
 		for(sC in servCountValues){
 			var value = sC.asReal();
-			value.println();
 			newValue.add((value - (value*percentage/100)).asString());
 		}
-		newValue.println();
 		self.setValue(stereotype, "servCount", newValue);
 	}
 }

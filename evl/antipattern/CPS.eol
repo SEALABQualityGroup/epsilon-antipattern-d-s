@@ -1,0 +1,30 @@
+operation Node F_maxQl() : Boolean {
+	var th_maxQl : Integer = 16;
+	
+	if(self.hasStereotype("RtUnit") and
+		self.getValue(self.getStereotype("RtUnit"), "queueSize").isDefined() and 
+			self.getValue(self.getStereotype("RtUnit"), "queueSize").asInteger() > th_maxQl ){
+		return true;
+	}
+	return false;
+}
+
+
+operation Node F_HwUtil() : Boolean {
+	var th_maxHwUtil : Sequence(Real) = new Sequence(Real);
+	th_maxHwUtil.add(0.9); //computation
+	th_maxHwUtil.add(0.9); //storage
+	
+	var utilization = self.getUtilization();
+	if(utilization.isUndefined() or utilization.isEmpty()){
+		return false;
+	}else{
+		//CPU and DISK of Component
+		if( utilization.at(0).asReal() >= th_maxHwUtil.at(0) or utilization.at(1).asReal() >= th_maxHwUtil.at(1) ){
+			if ( self.getNeighboursWithLowUtilization().isEmpty() ){
+				return false;			
+			}
+		}
+	}
+	return true;
+}
