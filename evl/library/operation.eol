@@ -191,7 +191,6 @@ operation Operation redeployOnNearLessUsedNode() : Boolean{
 		if(listOfNeighbours.isUndefined() or listOfNeighbours.size() == 0){
 			//non esistono vicini al nodo
 			return false;
-			//break;
 		}
 		
 		var lessNode : Node = listOfNeighbours->selectOne(
@@ -247,4 +246,28 @@ operation Operation dynamicFixing(component : Component) {
 	
 	lifeline.getCoveredBys().add(self.getMessageIn(interaction).getReceiveEvent());
 	lifeline.getCoveredBys().add(besL2);
+}
+
+
+operation Operation calculateTotalUtilization() : Real{
+	var totalUtilization : Real = 0.0;
+	var i : Integer = 0;
+	if(self.hasStereotype("GaStep") and self.hasStereotype("GaScenario") ){
+		for(utl in self.getValue(self.getStereotype("GaStep"), "servCount")){
+			totalUtilization = totalUtilization + utl.asReal();
+			i = i + 1;
+		}
+	} 
+	return (totalUtilization/i.asReal());
+}
+
+operation Operation moveIntoNewComponent(){
+	var sourceComponent : Component = self.class;
+	var packageContainer = sourceComponent.getNearestPackage();
+	
+	var newComponent : Component = new Component;
+	newComponent.name = "New "+sourceComponent.name;
+	packageContainer.addElement(newComponent);
+	
+	self.moveIntoComponent(newComponent);	
 }

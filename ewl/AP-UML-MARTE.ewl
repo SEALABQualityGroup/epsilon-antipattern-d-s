@@ -16,6 +16,13 @@ import "../evl/library/lifeline.eol";
 import "../evl/fixing/splitting.eol";
 
 
+/*********************************************************************************************
+ *																							 *
+ *	 								Pipe and Filter 										 *
+ *							Antipattern Detection and Validation					 		 *
+ *																							 *
+ *********************************************************************************************/
+
 //FIXING 1
 wizard newComponent {
 	guard : 
@@ -74,4 +81,50 @@ wizard redeployComponent_N_L_U_Node {
 	do {
  		self.moveToLessUsedComponent(20.0);
 	} 
+}
+
+
+
+/*********************************************************************************************
+ *																							 *
+ *	 							Concurrent Processing Systems 								 *
+ *							Antipattern Detection and Validation			     			 *
+ *																							 *
+ *********************************************************************************************/
+ 
+wizard Node {
+		guard: self.F_maxQl() and self.F_HwUtil()
+		
+		title : "Move it to a new Component deployed to a new Node"
+		do {
+			self.moveToNewComponentDeployedOnNewNode(); 
+		}
+}
+
+wizard Node{
+	guard: self.F_maxQl() and self.F_HwUtil()
+	title : "Move it to a new Component deployed to the less used neighbour Node"
+	do{
+		//FIXING 2
+		if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
+			"there was an error".println();
+	}
+}
+		
+wizard Node{
+	guard: self.F_maxQl() and self.F_HwUtil()
+	title : "Redeploy its owning Component "+self.name+" to the less used neighbour Node"
+	do{
+		//FIXING 3
+		self.redeployOnNearLessUsedNode();
+	}
+}
+
+wizard Node{
+	guard: self.F_maxQl() and self.F_HwUtil()
+	title : "Change its owning Component from "+self.name+" to the one with the lowest demand"
+	do{
+		//FIXING 4
+		self.moveToLessCriticalComponent();
+	}
 }

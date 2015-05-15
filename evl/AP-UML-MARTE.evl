@@ -1,14 +1,3 @@
-/////////////////////////////////////////////////// ANTIPATTERN RULES ///////////////////////////////////////////////////////
-import "components.eol";
-import "artifacts.eol";
-import "nodes.eol";
-
-import "supportingElements.eol";
-import "supportingOperation.eol";
-import "supportingComponents.eol";
-import "supportingArtifacts.eol"; 
-import "supportingNodes.eol";
-
 import "antipattern/PaF.eol";
 import "antipattern/CPS.eol";
 //import "antipattern/Blob.eol";
@@ -26,18 +15,16 @@ import "library/manifestation.eol";
 import "library/node.eol";
 import "library/lifeline.eol";
 
-//fixing
 import "fixing/splitting.eol";
 
- 
 
-///////////////////////////// TOP-LEVEL RULES /////////////////////////////////
+/*********************************************************************************************
+ *																							 *
+ *	 								Pipe and Filter 										 *
+ *							Antipattern Detection and Validation					 		 *
+ *																							 *
+ *********************************************************************************************/
 
-/**
-	Pipe and Filter Antipattern Detection and Validation
-*/
-
-// no parametro negli spostamenti
 context Operation {
 	critique PaF {
 		check {
@@ -83,9 +70,13 @@ context Operation {
 	}
 }
 
-/*
-
-*/
+/*********************************************************************************************
+ *																							 *
+ *	 							Concurrent Processing Systems 								 *
+ *							Antipattern Detection and Validation			     			 *
+ *																							 *
+ *********************************************************************************************/
+ 
 context Node {
 	critique CPS {
 		check {
@@ -95,16 +86,45 @@ context Node {
 		}
 		message : 'CPS <' + self.type.name + '> ' + self.name
 		fix {
-			//FIXING 3
-			title : "prendo il componente critico e lo sposto su un nuovo nodo"
+			title : "Move it to a new Component deployed to a new Node"
+			
 			do {
-				self.moveTheCriticalComponentToNewNode(); 
+					self.moveToNewComponentDeployedOnNewNode(); 
+			}
+		}
+		fix{
+			title : "Move it to a new Component deployed to the less used neighbour Node"
+			do{
+				//FIXING 2
+				if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
+					"there was an error".println();
+			}
+		}
+		fix{
+			title : "Redeploy its owning Component "+self.name+" to the less used neighbour Node"
+			do{
+				//FIXING 3
+				self.redeployOnNearLessUsedNode();
+			}
+		}
+		fix{
+			title : "Change its owning Component from "+self.name+" to the one with the lowest demand"
+			do{
+				//FIXING 4
+				self.moveToLessCriticalComponent();
 			}
 		}
 	}
 }
 
 
+
+/*********************************************************************************************
+ *																							 *
+ *	 										Blob  											 *
+ *							Antipattern Detection and Validation							 *
+ *																							 *
+ *********************************************************************************************/
 /*
 	BLOB
 *
@@ -146,6 +166,13 @@ context Artifact {
 	}
 }
 */
+
+/*********************************************************************************************
+ *																							 *
+ *	 								Extensive Processing  									 *
+ *							Antipattern Detection and Validation							 *
+ *																							 *
+ *********************************************************************************************/
 
 /*
 	Extensive Processing Antipattern Detection and Validation

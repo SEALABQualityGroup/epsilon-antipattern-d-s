@@ -245,15 +245,30 @@ operation Node getLessUsedNode() : Node{
  *	 									FIXING												 *
  *																							 *
  *********************************************************************************************/
- 
-operation Node moveTheCriticalComponentToNewNode() {
-	self.println();
+
+//fixing 1
+operation Node moveToNewComponentDeployedOnNewNode(){
 	var criticalComponent = self.getCriticalDeployedComponent();
-	criticalComponent.println();
+	var criticalOperation = criticalComponent.getCriticalOperation();
 	
-	var containerPackage = self.getNearestPackage();
-	
-	var lessUsedNode = self.getLessUsedNode();
-	lessUsedNode.println();
-	criticalComponent.deployOn(lessUsedNode);
+	criticalOperation.moveToNewComponentDeployedOnNewNode();
 }
+
+//fixing 2
+operation Node moveToNewComponentDeployedOnNearLessUsedNode(){
+	self.getCriticalDeployedComponent().getCriticalOperation().moveToNewComponentDeployedOnNearLessUsedNode();
+}
+
+
+//fixing 3 
+operation Node redeployOnNearLessUsedNode() {
+	var criticalComponent = self.getCriticalDeployedComponent();
+	
+	criticalComponent.getCriticalOperation().redeployOnNearLessUsedNode();
+}
+
+//fixing 4 
+operation Node moveToLessCriticalComponent(){
+	self.getCriticalDeployedComponent().getCriticalOperation().redeployOnNearLessUsedNode();
+}
+

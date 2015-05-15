@@ -358,3 +358,21 @@ operation Component createLifelineInto(interaction : Interaction) : Lifeline {
 		
 	return lifeline;
 }
+
+operation Component getCriticalOperation(){
+	var operations = self.getOwnedOperations();
+	var criticalOperation : Operation;
+	var utilization : Real;
+	
+	criticalOperation = operations->first();
+	utilization = criticalOperation.calculateTotalUtilization();
+	
+	for (op in operations){
+		if(utilization > op.calculateTotalUtilization()){
+			utilization = op.calculateTotalUtilization();
+			criticalOperation = op;
+		}
+	}
+	
+	return criticalOperation;
+}
