@@ -18,12 +18,10 @@ operation Lifeline removeInteractionFragment(mes : InteractionFragment){
 
 
 operation Lifeline getNextIncomingMessageStartingFrom() : Sequence (Message){
-	
 	return Message.allInstances->select(
 		mes : Message | self.getCoveredBys()->exists(mes.getReceiveEvent()) 
 	);
 }
-
 
 operation Lifeline getBESStartedBy(mos : MessageOccurrenceSpecification) : BehaviorExecutionSpecification{
 	return self.getCoveredBys()->selectOne(
@@ -34,3 +32,25 @@ operation Lifeline getBESStartedBy(mos : MessageOccurrenceSpecification) : Behav
 operation Lifeline removeCovered(fragment : InteractionFragment){
 	self.getCoveredBys().remove(fragment);
 }
+
+operation Lifeline getOutgoingMessages() : List(Message) {
+	var messages = self.getInteraction().getMessages(); 
+	
+	return messages->select(m : Message | self.getCoveredBys()->exists(mo : InteractionFragment | mo = m.sendEvent));
+}
+
+operation Lifeline getIncomingMessages() : List(Message){
+	var messages = self.getInteraction().getMessages(); 
+	
+	return messages->select(m : Message | self.getCoveredBys()->exists(mo : InteractionFragment | mo = m.receiveEvent));
+}
+
+operation Lifeline getNextIncomingMessage(mes : Message) : Message{
+	var incomingMes = self.getIncomingMessages();
+	
+	for (m in incomingMes){
+		if( self.getInteraction().getIndexOf(m.receiveEvent) > self.getInteraction().getIndexOf(mes.receiveEvent) )
+			return m;
+	}
+	return null;
+} 

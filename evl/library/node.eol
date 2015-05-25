@@ -120,11 +120,14 @@ operation Node getUtilization() : Sequence(Real){
 			}else{
 				for(art in artifacts){
 					var listOfComponents = art.getManifestedComponents();
-					for(com in listOfComponents){
-						var utl = com.calculateUtilization();
-						if(not utl.isEmpty()){
-							utilization.at(0).asReal() = utilization.at(0).asReal() + utl.at(0).asReal();
-							utilization.at(1).asReal() = utilization.at(1).asReal() + utl.at(1).asReal();
+					if(listOfComponents.isDefined() and not listOfComponents.isEmpty()){
+						for(com in listOfComponents){
+							com.println();
+							var utl = com.calculateUtilization();
+							if(not utl.isEmpty()){
+								utilization.at(0).asReal() = utilization.at(0).asReal() + utl.at(0).asReal();
+								utilization.at(1).asReal() = utilization.at(1).asReal() + utl.at(1).asReal();
+							}
 						}
 					}
 				}

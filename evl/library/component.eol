@@ -144,7 +144,7 @@ operation Component getAllLifelines() : List(Lifeline){
 			}
 		}
 	}
-	
+	return returnValue;
 }
 
 operation Component getProvidedInterfaces() : Sequence(InterfaceRealization) {
@@ -373,6 +373,14 @@ operation Component getCriticalOperation(){
 			criticalOperation = op;
 		}
 	}
-	
 	return criticalOperation;
+}
+
+operation Component getSendingMessages() : Integer{
+	var lifelines = self.getLifelines();
+	
+	for(lf in lifelines){
+		var outgoingMessages = lf.getOutgoingMessages();
+		
+	}
 }

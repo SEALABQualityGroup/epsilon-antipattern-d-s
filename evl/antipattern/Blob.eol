@@ -1,7 +1,36 @@
-operation Artifact getManifestedComponentStereotyped(stereotype : String) : Set(Component){
-		
-	return self.getManifestations()->select(
-		manifestation : Manifestation | 
-			manifestation.utilizedElement->exists(component : Component | component.hasStereotype(stereotype))
-		);	
+operation Component F_maxClientConnects() : Boolean{
+	var th_maxConnects : Integer = 1;
+	if(not self.hasStereotype("PaRunTInstance")) return false;
+	if(self.getProvideds().size() >= th_maxConnects)
+		return true;
+	return false;
+}
+
+operation Component F_maxSupplierConnects() : Boolean{
+	
+	var th_maxConnects : Integer = 1;
+	
+	if(not self.hasStereotype("PaRunTInstance")) return false;
+	
+	if(self.getRequireds().size() >= th_maxConnects){
+		return true;
+	}
+	return false;
+}
+
+operation Operation F_numMsgs() : Boolean{
+	var th_maxMsgs : Integer = 1;
+	
+	var lifelines = self.class.getAllLifelines();
+	
+	for(lf in lifelines){
+		var int = lf.getInteraction();
+		var mes = self.getMessageIn(lf.getInteraction());
+		var nextMess = lf.getNextIncomingMessage(mes);
+		if( 
+			(interaction.getIntexOf(nextMes.receiveEvent).asInteger() - 
+				interaction.getIndexOf(mes.receiveEvent.asInteger() ) >= th_MaxMsgs ) )
+			return true;		
+	}
+	return false;
 }
