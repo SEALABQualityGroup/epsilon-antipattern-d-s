@@ -1,6 +1,6 @@
 import "antipattern/PaF.eol";
 import "antipattern/CPS.eol";
-//import "antipattern/Blob.eol";
+import "antipattern/Blob.eol";
 //import "antipattern/EP.eol";
 
 
@@ -125,17 +125,15 @@ context Node {
  *							Antipattern Detection and Validation							 *
  *																							 *
  *********************************************************************************************/
-/*
-	BLOB
-*
-context Artifact {
-	
-	guard : (not self.getManifestedComponentStereotyped("PaRunTInstance").isEmpty())
-				//and self.getManifestedComponent().hasStereotype('PaRunTInstance')
+context Operation {
 	critique Blob {
 		check {
-			--return self.satisfies('Blob_static') and self.satisfies('Blob_deployment');
-			return self.Blob_static() or self.Blob_deployment();
+			if(
+				(self.class.F_maxClientConnects() or self.class.F_maxSupplierConnects()) and 
+					(self.class.F_numMsgs())
+			)
+				return false;
+			return true;
 		}
 		message : 'Blob <' + self.type.name + '> ' + self.name
 		fix {
@@ -165,7 +163,6 @@ context Artifact {
 		}
 	}
 }
-*/
 
 /*********************************************************************************************
  *																							 *
