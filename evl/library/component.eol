@@ -38,7 +38,7 @@ operation Component cloneRequiredsFrom(component : Component ){
 operation Component getLifelines() : List(Lifeline){
 	var returnValue : List(Lifeline) = new List (Lifeline);
 	for(lifeline in Lifeline.allInstances){
-		if(lifeline.namespace.isDefined() and lifeline.namespace.hasComponent(self)){
+		if(lifeline.getInteraction().isDefined() and lifeline.getRepresents().getType() == self){
 			returnValue.add(lifeline);
 		}
 	}
@@ -133,20 +133,6 @@ operation Component getAllInteractionProperties() : List(Property){
 	return returnValue;
 }
 
-//recupero tutte le lifeline del componente
-operation Component getAllLifelines() : List(Lifeline){
-	var returnValue : List(Lifeline) = new List(Lifelinei);
-	
-	for(lifeline in Lifeline.allInstances){
-		for(pro in self.getProperties()){
-			if(lifeline.represents == prop){
-				returnValue.add(lifeline);
-			}
-		}
-	}
-	return returnValue;
-}
-
 operation Component getProvidedInterfaces() : Sequence(InterfaceRealization) {
 	return self.getInterfaceRealizations()->collect(cd | cd.supplier->first())->asSequence();
 }
@@ -182,7 +168,6 @@ operation Component getNodes() : List(Node){
 			}
 		}
 	}
-
 	return returnValue;
 }
 
@@ -381,6 +366,53 @@ operation Component getSendingMessages() : Integer{
 	
 	for(lf in lifelines){
 		var outgoingMessages = lf.getOutgoingMessages();
-		
 	}
+}
+
+/*
+	When there are many messages between the starting point of a BES and its finish one, the component might be a Blob Controller
+*/
+operation Component getCriticalMessages4BlobControllerAP(th_maxMsgs : Integer) : Sequence(Message){
+	var returnValue : Sequence(Message) = new Sequence(Message);
+	var lifelines = self.getLifelines();
+	for(lf in lifelines){
+		var beses = lf.getBESes();
+		for(bes in beses){
+			if(((bes.getOwner().getIndexOf(bes.finish).asInteger() - bes.getOwner().getIndexOf(bes.start).asInteger())/2).asInteger() >= th_maxMsgs)
+				returnValue.add(bes.start.getMessage());
+		}
+	}
+	return returnValue;
+}
+
+/*
+	If a component receives a lot of calls, it might be a Blob Container AP 
+*/
+operation Component getCriticalLifeline4BlobContainerAP(th_maxMsgs : Integer) : Sequence(Lifeline){
+	var returnValue : Sequence(Lifeline) = new Sequence(Lifeline);
+	var lifelines = self.getLifelines();
+	for(lf in lifelines){
+		var beses = lf.getBESes();
+		if(beses.size() >= th_maxMsgs){
+			returnValue.add(lf);
+		}
+	}
+	return returnValue;
+}
+
+operation Component getNodesWithUtilizationGreaterThan(th_maxHwUtil : Real) : Sequence(Node){
+	return self.getNodes()->select(n : Node | n.getUtilization() >= th_maxHwUtil);
+}
+
+operation Component getNodesWithNetworkUsageGreaterThan(th_maxNetUtil : Real) : Sequence(Node){
+	var th_maxHwUtil : Real = 0.85;
+	var returnValue : Sequence(Node) = new Sequence(Node);
+	var criticalNodes = self.getNodesWithUtilizationGreaterThan(th_maxHwUtil);
+	for (node in criticalNodes){
+		if(node.getNetworkUsage() >= th_maxNetUtil)
+			returnValue.add(node); 
+	}
+	self.getNodesWithUtilizationGreaterThan(th_maxHwUtil)->select(n | n.getNetworkUsage() >= th_maxNetUtil).println();
+	returnValue.println();
+	return returnValue;
 }

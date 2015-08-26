@@ -32,7 +32,8 @@ pattern Move_it_to_a_new_Component_deployed_to_a_new_Node
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() )  				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		mainRole.moveToNewComponentDeployedOnNewNode(20.0);
+		"1".println();
+		mainRole.moveToNewComponentDeployedOnNewNode();
 	}
 }
 
@@ -45,7 +46,8 @@ pattern Move_it_to_a_new_Component_deployed_to_the_less_used_neighbour_Node
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		mainRole.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
+		"2".println();
+		mainRole.moveToNewComponentDeployedOnNearLessUsedNode();
 	}
 }
 
@@ -58,7 +60,8 @@ pattern Redeploy_owner_Component_to_the_less_used_neighbour_Node
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		mainRole.redeployOnNearLessUsedNode(20.0);
+		"3".println();
+		mainRole.redeployOnNearLessUsedNode();
 	}
 }
 
@@ -71,7 +74,8 @@ pattern Move_it_to_the_less_critical_Component
 		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		mainRole.moveToLessCriticalComponent(20.0);
+		"4".println();
+		mainRole.moveToLessCriticalComponent();
 	}
 }
 
@@ -80,11 +84,11 @@ pattern Move_it_to_the_less_critical_Component
  *	 							Concurrent Processing Systems 								 *
  *							Antipattern Detection and Validation			     			 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  
 pattern Move_its_critical_Operation_to_a_new_Component_deployed_to_a_new_Node 
 	mainRole : Node{
-	match: self.F_maxQl() and self.F_HwUtil()		
+	match: mainRole.F_maxQl() and mainRole.F_HwUtil()		
 	do {
 		UserInput.inform("The Node named <"+mainRole.name+"> is a CPS! The solution will be applied!");
 		self.moveToNewComponentDeployedOnNewNode(); 
@@ -93,7 +97,7 @@ pattern Move_its_critical_Operation_to_a_new_Component_deployed_to_a_new_Node
 
 pattern Move_its_critical_Operation_to_a_new_Component_deployed_to_the_less_used_neighbour_Node 
 	mainRole : Node{
-	match: self.F_maxQl() and self.F_HwUtil()		
+	match: mainRole.F_maxQl() and mainRole.F_HwUtil()		
 	do{
 		UserInput.inform("The Node named <"+mainRole.name+"> is a CPS! The solution will be applied!");
 		//FIXING 2
@@ -104,7 +108,7 @@ pattern Move_its_critical_Operation_to_a_new_Component_deployed_to_the_less_used
 
 pattern Redeploy_its_critical_Component_to_the_less_used_neighbour_Node 
 	mainRole : Node{
-	match: self.F_maxQl() and self.F_HwUtil()		
+	match: mainRole.F_maxQl() and mainRole.F_HwUtil()		
 	do{
 		UserInput.inform("The Node named <"+mainRole.name+"> is a CPS! The solution will be applied!");
 		//FIXING 3
@@ -114,10 +118,11 @@ pattern Redeploy_its_critical_Component_to_the_less_used_neighbour_Node
 
 pattern Move_its_critical_Operation_to_the_less_critical_Component 
 	mainRole : Node{
-	match: self.F_maxQl() and self.F_HwUtil()		
+	match: mainRole.F_maxQl() and mainRole.F_HwUtil()		
 	do{
 		UserInput.inform("The Node named <"+mainRole.name+"> is a CPS! The solution will be applied!");
 		//FIXING 4
 		self.moveToLessCriticalComponent();
 	}
 }
+*/

@@ -17,6 +17,13 @@ operation Interaction hasComponent(component : Component) : Boolean {
 }
 
 operation Interaction getIndexOf(fragment : InteractionFragment) : Integer{
+
+	var indexOf : Integer = self.getFragments()->indexOf(fragment);
+	return indexOf;
+}
+
+operation InteractionOperand getIndexOf(fragment : InteractionFragment) : Integer{
+
 	var indexOf : Integer = self.getFragments()->indexOf(fragment);
 	return indexOf;
 }

@@ -154,9 +154,12 @@ operation Operation getAllInteractions() : List(Interaction){
 }
 
 operation Operation getMessageIn(interaction : Interaction) : Message{
+
 	var mes = interaction.getMessages()->selectOne(iterator : Message | iterator.getSignature() == self);
+
 	return mes;
 }
+
 
 operation Operation getUsages() : List(Usage){
 	return Usage.allInstances->select(usage : Usage |

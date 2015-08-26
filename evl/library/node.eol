@@ -104,18 +104,23 @@ operation Node getArtifactOf(component : Component) : Artifact{
 	return null;
 }
 
-operation Node getUtilization() : Sequence(Real){
-	var utilization : Sequence(Real) = new Sequence(Real);
+/*****************************************************************
+ *							WARNING								 *
+ *****************************************************************/
+operation Node getUtilization() : Real{
+	var utilization : Real;
 	if(not self.hasStereotype("GaExecHost")){
+		"the node < "+ self.name + " > is not correctly stereotyped".println();
 		return null;
 	}
 	else{
 		var selfUtilization = self.getValue(self.getStereotype("GaExecHost"), "utilization");
 		if(selfUtilization.isDefined() and not selfUtilization.isEmpty()){
-			return selfUtilization.asSequence();
+			return selfUtilization->first().asReal();
 		}else{
 			var artifacts = self.getArtifact();
 			if(artifacts.isEmpty()){
+				"the node < "+ self.name + " > does not manifest any artifact".println();
 				return null;
 			}else{
 				for(art in artifacts){
@@ -125,8 +130,7 @@ operation Node getUtilization() : Sequence(Real){
 							com.println();
 							var utl = com.calculateUtilization();
 							if(not utl.isEmpty()){
-								utilization.at(0).asReal() = utilization.at(0).asReal() + utl.at(0).asReal();
-								utilization.at(1).asReal() = utilization.at(1).asReal() + utl.at(1).asReal();
+								utilization = utilization + utl.at(0).asReal() + utl.at(1).asReal();
 							}
 						}
 					}
@@ -186,12 +190,10 @@ operation Node isNetworkNode() : Boolean {
 }
 
 operation Node hasLowUtilization() : Boolean {
-	var th_minHwUtil : Sequence(Real) = new Sequence(Real);
-	th_minHwUtil.add(0.6); //computation
-	th_minHwUtil.add(0.6); //storage
+	var th_minHwUtil : Real = 0.6;
 	//CPU or DISK 
 	if(self.getUtilization().isDefined() and not self.getUtilization().isEmpty() and 
-		(self.getUtilization().at(0).asReal() < th_minHwUtil.at(0) or self.getUtilization().at(1).asReal() < th_minHwUtil.at(1)) )
+		(self.getUtilization().at(0).asReal() < th_minHwUtil) )
 			return true;
 	return false;
 }
@@ -207,7 +209,6 @@ operation Node getCriticalDeployedComponent() : Component{
 		criticalComponent = components->first();
 		for(comp in components){
 			if(utilization < comp.calculateTotalUtilization().asReal()){
-				
 				utilization = comp.calculateTotalUtilization();
 				criticalComponent = comp;
 			}
@@ -241,6 +242,21 @@ operation Node getLessUsedNode() : Node{
 		}		
 	}
 	return lessUsedNode;
+}
+
+operation Node getNetworkUsage() : Real{
+	var networkUsage : Real = 0.0;
+	for(cp in self.getCommunicationPaths()){
+		if(cp.hasStereotype("GaCommChannel")){
+			networkUsage = networkUsage + cp.getValue(cp.getStereotype("GaCommChannel"),"utilization").asReal();
+		}
+	}
+	
+	if(not self.getCommunicationPaths.isEmpty()){
+		networkUsage = networkUsage / self.getCommunicationPaths().size();	
+	}
+	
+	return networkUsage;
 }
 
 /*********************************************************************************************

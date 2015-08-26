@@ -1,6 +1,7 @@
 operation Component F_maxClientConnects() : Boolean{
-	var th_maxConnects : Integer = 1;
+	var th_maxConnects : Integer = 4;
 	if(not self.hasStereotype("PaRunTInstance")) return false;
+	
 	if(self.getProvideds().size() >= th_maxConnects)
 		return true;
 	return false;
@@ -8,29 +9,44 @@ operation Component F_maxClientConnects() : Boolean{
 
 operation Component F_maxSupplierConnects() : Boolean{
 	
-	var th_maxConnects : Integer = 1;
+	var th_maxConnects : Integer = 4;
 	
 	if(not self.hasStereotype("PaRunTInstance")) return false;
 	
 	if(self.getRequireds().size() >= th_maxConnects){
+		self.println();
 		return true;
 	}
 	return false;
 }
 
-operation Operation F_numMsgs() : Boolean{
+operation Component F_numMsgsIn() : Boolean{
 	var th_maxMsgs : Integer = 1;
-	
-	var lifelines = self.class.getAllLifelines();
-	
-	for(lf in lifelines){
-		var int = lf.getInteraction();
-		var mes = self.getMessageIn(lf.getInteraction());
-		var nextMess = lf.getNextIncomingMessage(mes);
-		if( 
-			(interaction.getIntexOf(nextMes.receiveEvent).asInteger() - 
-				interaction.getIndexOf(mes.receiveEvent.asInteger() ) >= th_MaxMsgs ) )
-			return true;		
-	}
+
+	//finds the list of critical messages into every interactions, which own the critical component	
+	if(not self.getCriticalMessages4BlobControllerAP(th_maxMsgs).isEmpty())
+		return true;
+	return false;
+}
+
+operation Component F_numMsgsOut() : Boolean{
+	var th_maxMsgs : Integer = 3;
+
+	if(not self.getCriticalLifeline4BlobContainerAP(th_maxMsgs).isEmpty())
+		return true;
+	return false;
+}
+
+operation Component F_maxHwUtil() : Boolean{
+	var th_maxHwUtil : Real = 0.85;
+	if(not self.getNodesWithUtilizationGreaterThan(th_maxHwUtil).isEmpty())
+		return true;
+	return false;	
+}
+
+operation Component F_maxNetUtil() : Boolean{
+	var th_maxNetUtil : Real = 0.9;
+	if(not self.getNodesWithNetworkUsageGreaterThan(th_maxNetUtil).isEmpty())
+		return true;
 	return false;
 }

@@ -40,17 +40,46 @@ operation Lifeline getOutgoingMessages() : List(Message) {
 }
 
 operation Lifeline getIncomingMessages() : List(Message){
+	var messages = self.getInteraction().getMessages();
+	
+	return messages->select(m : Message | self.getCoveredBys()->exists(mo : MessageOccurrenceSpecification | mo = m.receiveEvent)).asSequence();
+}
+
+operation Lifeline getOutgoingMessages() : List(Message){
 	var messages = self.getInteraction().getMessages(); 
 	
-	return messages->select(m : Message | self.getCoveredBys()->exists(mo : InteractionFragment | mo = m.receiveEvent));
+	return messages->select(m : Message | self.getCoveredBys()->exists(mo : InteractionFragment | mo = m.sendEvent));
 }
 
 operation Lifeline getNextIncomingMessage(mes : Message) : Message{
+
 	var incomingMes = self.getIncomingMessages();
 	
 	for (m in incomingMes){
-		if( self.getInteraction().getIndexOf(m.receiveEvent) > self.getInteraction().getIndexOf(mes.receiveEvent) )
+	
+		m.receiveEvent.namespace.getIndexOf(m.receiveEvent).println();
+		mes.receiveEvent.namespace.getIndexOf(mes.receiveEvent).println();
+		
+		self.getInteraction().getIndexOf(mes.receiveEvent.namespace).println();
+		
+		if( m.receiveEvent.namespace.getIndexOf(m.receiveEvent) > mes.receiveEvent.namespace.getIndexOf(mes.receiveEvent) ){
+			"altola".println();
+			return m;
+		}
+	}
+	return null;
+} 
+
+operation Lifeline getNextOutgoingMessage(mes : Message) : Message{
+	var outgoingMes = self.getOutgoingMessages();
+	
+	for (m in outgoingMes){
+		if( self.getInteraction().getIndexOf(m.sendEvent) > self.getInteraction().getIndexOf(mes.sendEvent) )
 			return m;
 	}
 	return null;
 } 
+
+operation Lifeline getBESes() : Sequence(BehaviorExecutionSpecification){
+	return self.getCoveredBys()->select(cov | cov.isTypeOf(BehaviorExecutionSpecification)).asSequence();
+}

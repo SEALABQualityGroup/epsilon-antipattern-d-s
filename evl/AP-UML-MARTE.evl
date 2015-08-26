@@ -23,7 +23,7 @@ import "fixing/splitting.eol";
  *	 								Pipe and Filter 										 *
  *							Antipattern Detection and Validation					 		 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
 
 context Operation {
 	critique PaF {
@@ -75,7 +75,7 @@ context Operation {
  *	 							Concurrent Processing Systems 								 *
  *							Antipattern Detection and Validation			     			 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  
 context Node {
 	critique CPS {
@@ -125,40 +125,40 @@ context Node {
  *							Antipattern Detection and Validation							 *
  *																							 *
  *********************************************************************************************/
-context Operation {
-	critique Blob {
+ 
+context Component {
+	critique Blob_Controller {
 		check {
-			if(
-				(self.class.F_maxClientConnects() or self.class.F_maxSupplierConnects()) and 
-					(self.class.F_numMsgs())
+			if(  self.F_maxSupplierConnects() and self.F_numMsgsIn() and 
+				(self.F_maxHwUtil() or self.F_maxNetUtil())
 			)
 				return false;
 			return true;
 		}
-		message : 'Blob <' + self.type.name + '> ' + self.name
+		message : 'Blob Controller <' + self.type.name + '> ' + self.name
 		fix {
-			guard : self.getDeployNode().isDefined() 
-				and self.getDeployNode().getNodeNeighbours().isDefined() 
-					and self.getDeployNode().getNodeNeighbours().getLessUsedNode().isDefined()
-			title : 'Redeploy the Blob Artifact on the less used neighbour Node'
-			do {
-				var nodeNeighbours := self.getDeployNode().getNodeNeighbours();
-				var lessUsedNode : Node := nodeNeighbours.getLessUsedNode();
-				var deployment := self.getDeployNode().deployment->selectOne(d | d.getDeployedArtifacts()->includes(self));
-				self.getDeployNode().deployment->remove(deployment);
-				lessUsedNode.deployment->add(deployment);
+			title: "fix 1"
+			do{
+				"fix1".println();
 			}
 		}
+	}
+}
+
+context Component {
+	critique Blob_dataContainer {
+		check {
+			if( self.F_maxClientConnects() and self.F_numMsgsOut() and 
+				( self.F_maxNetUtil() or self.F_maxHwUtil())
+			)
+				return false;
+			return true;
+		}
+		message : 'Blob Container <' + self.type.name + '> ' + self.name
 		fix {
-			title : 'Mirror the Blob Artifact on a clone of the Blob Node'
-			do {
-				var selfCopy := self.clone();
-				var newDeployment := new Deployment;
-				var deployedArtifacts := new Sequence;
-				deployedArtifacts.add(selfCopy);
-				newDeployment.deployedArtifact = deployedArtifacts;
-				var selfDeployNodeCopy := self.getDeployNode().clone();
-				selfDeployNodeCopy.deployment->add(newDeployment);
+			title: "fix 1"
+			do{
+				"fix2".println();
 			}
 		}
 	}
