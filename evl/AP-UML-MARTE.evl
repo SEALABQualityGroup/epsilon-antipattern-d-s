@@ -127,7 +127,7 @@ context Node {
 
 /*********************************************************************************************
  *																							 *
- *	 										Blob  											 *
+ *								Blob Controller & Container									 *
  *							Antipattern Detection and Validation							 *
  *																							 *
  *********************************************************************************************/
@@ -208,9 +208,6 @@ context Component {
  *																							 *
  *********************************************************************************************/
 
-/*
-	Extensive Processing Antipattern Detection and Validation
-
 context Component{
 	guard : self.hasStereotype('PaRunTInstance') 
 	critique EP{
@@ -225,71 +222,8 @@ context Component{
 		fix{
 			title : "Fix title"
 			do{
-				//TODO
-				/*
-					------Static------
-					1. creare un nuovo componente
-					2. spostare la seconda operatione nel nuovo componente
-						
-					------Deploy -----
-					1. creare un nuovo nodo
-					2. deployare il nuovo componente sul nuovo nodo
-								
-					-----Dynamic-------
-					1. spostare la seconda operazione nella seconda lifeline
-					2. mantenere le due operazioni in un alternative fragment
-			
-				
+				"fix".println();				
 			}
 		}
 	}
 }
-*/
---context Component {
---	
---	guard : self.hasStereotype('PaRunTInstance')
---	
---	critique Blob {
---		check {
---			--return self.satisfies('Blob_static') and self.satisfies('Blob_deployment');
---			return self.Blob_static() or self.Blob_deployment();
---		}
---		message : 'Blob <' + self.type.name + '> ' + self.name
---	}
---
---}
-
---context Node {
---
---	guard : self.hasStereotype('GaExecHost')
---	
---	critique CPS {
---		check {
---			return self.CPS_deployment_queue() or self.CPS_deployment_unbalancedNodes();
---		}
---		message : 'CPS <' + self.type.name + '> ' + self.name
---		fix {
---			guard : self.hasCriticalComponent() and self.getUnbalancedNodes().isDefined() and self.getUnbalancedNodes().getLessUsedNode().isDefined()
---			title : 'Redeploy the critical Component on the less used CPS Node'
---			do {
---				var criticalComponent := self.getCriticalComponent();
---				UserInput.inform('Node ' + self.name + 
---						'\nCritical Component: ' + criticalComponent->asString());
---				var unbalancedNodes := self.getUnbalancedNodes();
---				var lessUsedNode : Node := unbalancedNodes.getLessUsedNode();
---				var deployment := self.deployment->select(d | d.deployedArtifact->first().isTypeOf(Artifact) and d.deployedArtifact->first().getManifestedComponent() == criticalComponent)->first();
---				--UserInput.inform('Node ' + self.name + 
---				--	'\nOld Deployment: ' + oldDeployment);
---				--var newDeployment : new Deployment;
---				--newDeployment.deployedArtifact = oldDeployment.deployedArtifact;
---				lessUsedNode.deployment->add(deployment);
---				self.deployment->remove(deployment);
---				--UserInput.inform('Node ' + self.name + 
---				--	'\nNew Deployment: ' + newDeployment.name);
---					--}
---				--}
---			}
---		}
---	}
---
---}
