@@ -378,9 +378,19 @@ operation Component getCriticalMessages4BlobControllerAP(th_maxMsgs : Integer) :
 	for(lf in lifelines){
 		var beses = lf.getBESes();
 		for(bes in beses){
-			if(((bes.getOwner().getIndexOf(bes.finish).asInteger() - bes.getOwner().getIndexOf(bes.start).asInteger())/2).asInteger() >= th_maxMsgs)
+			if(((bes.getOwner().getIndexOf(bes.finish).asInteger() - bes.getOwner().getIndexOf(bes.start).asInteger())/2).asInteger() >= th_maxMsgs){
 				returnValue.add(bes.start.getMessage());
+			}
 		}
+	}
+	return returnValue;
+}
+
+operation Component getCriticalOperations4BlobControllerAP(th_maxMsgs : Integer) : Sequence(Operation){
+	var returnValue : Sequence(Operation) = new Sequence(Operation);
+	
+	for(msg in self.getCriticalMessages4BlobControllerAP(th_maxMsgs)){
+		returnValue.add(msg.getSignature());
 	}
 	return returnValue;
 }
@@ -412,7 +422,5 @@ operation Component getNodesWithNetworkUsageGreaterThan(th_maxNetUtil : Real) : 
 		if(node.getNetworkUsage() >= th_maxNetUtil)
 			returnValue.add(node); 
 	}
-	self.getNodesWithUtilizationGreaterThan(th_maxHwUtil)->select(n | n.getNetworkUsage() >= th_maxNetUtil).println();
-	returnValue.println();
 	return returnValue;
 }

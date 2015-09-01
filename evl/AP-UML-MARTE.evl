@@ -17,13 +17,23 @@ import "library/lifeline.eol";
 
 import "fixing/splitting.eol";
 
+/*********************************************************************************************
+ *																							 *
+ *	 									Constants									 		 *
+ *																							 *
+ *********************************************************************************************/
+
+
+pre {
+	var th_maxMsgs : Integer = 1;		
+}
 
 /*********************************************************************************************
  *																							 *
  *	 								Pipe and Filter 										 *
  *							Antipattern Detection and Validation					 		 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
 
 context Operation {
 	critique PaF {
@@ -32,14 +42,12 @@ context Operation {
 					self.PaF_resDemand() and
 						(self.PaF_F_throughtput().size() > 0 or self.PaF_F_maxHwUtil().size() > 0 ) ){
 							return false;
-							
 			}
 			return true;
 		}
 		message : 'PaF <Operation> ' + self.name
 		fix {
 			title : "Move it to a new Component deployed to a new Node"
-			
 			do {
 					self.moveToNewComponentDeployedOnNewNode(); 
 			}
@@ -75,7 +83,7 @@ context Operation {
  *	 							Concurrent Processing Systems 								 *
  *							Antipattern Detection and Validation			     			 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
  
 context Node {
 	critique CPS {
@@ -117,8 +125,6 @@ context Node {
 	}
 }
 
-
-
 /*********************************************************************************************
  *																							 *
  *	 										Blob  											 *
@@ -137,9 +143,40 @@ context Component {
 		}
 		message : 'Blob Controller <' + self.type.name + '> ' + self.name
 		fix {
-			title: "fix 1"
+			title : "Move it to a new Component deployed to a new Node"
+			
+			do {
+				for(op in self.getCriticalOperations4BlobControllerAP(th_maxMsgs.asInteger())){
+					op.moveToNewComponentDeployedOnNewNode();
+				}
+				//self.moveToNewComponentDeployedOnNewNode();
+			}
+		}
+		fix{
+			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
-				"fix1".println();
+				//FIXING 2
+				for(op in self.getCriticalOperations4BlobControllerAP(th_maxMsgs)){
+					op.moveToNewComponentDeployedOnNearLessUsedNode();
+				}
+			}
+		}
+		fix{
+			title : "Redeploy its owning Component "+self.name+" to the less used neighbour Node"
+			do{
+				//FIXING 3
+				for(op in self.getCriticalOperations4BlobControllerAP(th_maxMsgs)){
+					op.redeployOnNearLessUsedNode();
+				}
+			}
+		}
+		fix{
+			title : "Change its owning Component from "+self.name+" to the one with the lowest demand"
+			do{
+				//FIXING 4
+				for(op in self.getCriticalOperations4BlobControllerAP(th_maxMsgs)){
+					op.moveToLessCriticalComponent();
+				}
 			}
 		}
 	}

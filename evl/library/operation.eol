@@ -154,9 +154,7 @@ operation Operation getAllInteractions() : List(Interaction){
 }
 
 operation Operation getMessageIn(interaction : Interaction) : Message{
-
 	var mes = interaction.getMessages()->selectOne(iterator : Message | iterator.getSignature() == self);
-
 	return mes;
 }
 
@@ -223,32 +221,40 @@ operation Operation redeployOnNearLessUsedNode() : Boolean{
 }
 
 //individuare un nome migliore :)
+//TODO controllare con gli altri AP, modificato il comportamento del fixing
 operation Operation dynamicFixing(component : Component) {
-	var interaction = self.getAllInteractions()->first();
+	var interaction = self.getAllInteractions()->first(); //TODO controllare potrebbe lavorare su un interaction non corretto
 	var sourceLifeline = component.getLifeline(interaction);
-	var lifeline = interaction.createLifeline(self.class.name+"lifeline"); //L2
-	
+	var lifeline = interaction.createLifeline(self.class.name+"Lifeline"); //L2
 	var spProp = interaction.createOwnedAttribute(self.class.name, self.class);
 	
-	var besL2 : BehaviorExecutionSpecification = new BehaviorExecutionSpecification;
-	var messageEnd : ExecutionOccurrenceSpecification = new ExecutionOccurrenceSpecification;
-	
 	lifeline.setRepresents(spProp);
-	
 	lifeline.cloneAppliedStereotypesFrom(sourceLifeline);
 	lifeline.setVisibility(sourceLifeline.getVisibility());
 	
-	var indexOf : Integer = interaction.getIndexOf(self.getMessageIn(interaction).getReceiveEvent());
-	interaction.addFragmentAt(besL2,indexOf+1);
-	interaction.addFragmentAt(messageEnd, interaction.getIndexOf(besL2)+1);
+	var beses = sourceLifeline.getBESes();
+	var bes = beses->selectOne(bes | bes.getStart().getMessage().getSignature() == self );
 	
-	sourceLifeline.removeInteractionFragment(self.getMessageIn(interaction).getReceiveEvent());
+	var sourceCoveredBys :Sequence(InteractionFragment) = new Sequence(InteractionFragment);
+	//sposto dal MOS_receive dell'op fino all'EOS esclusi
+	for(i in sourceLifeline.getCoveredBys()){
+		if( i.getOwner().getIndexOf(i) > bes.getOwner().getIndexOf(bes.getStart()) 
+			and i.getOwner().getIndexOf(i) < bes.getOwner().getIndexOf(bes.getFinish())
+		){
+			lifeline.getCoveredBys().add(i);
+			sourceCoveredBys.add(i);
+		}
+	}
+	for(i in sourceCoveredBys){
+		sourceLifeline.removeInteractionFragment(i);
+	}
 	
-	besL2.start = self.getMessageIn(interaction).getReceiveEvent();
-	besL2.finish = messageEnd;
+	//sposto il MOS_r dell'op e il EOS
+	lifeline.getCoveredBys().add(bes.getStart());
+	lifeline.getCoveredBys().add(bes.getFinish());
 	
-	lifeline.getCoveredBys().add(self.getMessageIn(interaction).getReceiveEvent());
-	lifeline.getCoveredBys().add(besL2);
+	sourceLifeline.removeInteractionFragment(bes.getStart());
+	sourceLifeline.removeInteractionFragment(bes.getFinish());
 }
 
 

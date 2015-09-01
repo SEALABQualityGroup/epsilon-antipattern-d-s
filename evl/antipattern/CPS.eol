@@ -11,16 +11,14 @@ operation Node F_maxQl() : Boolean {
 
 
 operation Node F_HwUtil() : Boolean {
-	var th_maxHwUtil : Sequence(Real) = new Sequence(Real);
-	th_maxHwUtil.add(0.9); //computation
-	th_maxHwUtil.add(0.9); //storage
+	var th_maxHwUtil : Real = 0.9;
 	
 	var utilization = self.getUtilization();
-	if(utilization.isUndefined() or utilization.isEmpty()){
+	if(utilization.isUndefined()){
 		return false;
 	}else{
 		//CPU and DISK of Component
-		if( utilization.at(0).asReal() >= th_maxHwUtil.at(0) or utilization.at(1).asReal() >= th_maxHwUtil.at(1) ){
+		if( utilization.asReal() >= th_maxHwUtil){
 			if ( self.getNeighboursWithLowUtilization().isEmpty() ){
 				return false;			
 			}

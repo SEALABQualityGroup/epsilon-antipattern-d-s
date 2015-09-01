@@ -56,14 +56,7 @@ operation Lifeline getNextIncomingMessage(mes : Message) : Message{
 	var incomingMes = self.getIncomingMessages();
 	
 	for (m in incomingMes){
-	
-		m.receiveEvent.namespace.getIndexOf(m.receiveEvent).println();
-		mes.receiveEvent.namespace.getIndexOf(mes.receiveEvent).println();
-		
-		self.getInteraction().getIndexOf(mes.receiveEvent.namespace).println();
-		
 		if( m.receiveEvent.namespace.getIndexOf(m.receiveEvent) > mes.receiveEvent.namespace.getIndexOf(mes.receiveEvent) ){
-			"altola".println();
 			return m;
 		}
 	}

@@ -191,9 +191,8 @@ operation Node isNetworkNode() : Boolean {
 
 operation Node hasLowUtilization() : Boolean {
 	var th_minHwUtil : Real = 0.6;
-	//CPU or DISK 
-	if(self.getUtilization().isDefined() and not self.getUtilization().isEmpty() and 
-		(self.getUtilization().at(0).asReal() < th_minHwUtil) )
+	if(self.getUtilization().isDefined() and 
+		(self.getUtilization().asReal() < th_minHwUtil) )
 			return true;
 	return false;
 }

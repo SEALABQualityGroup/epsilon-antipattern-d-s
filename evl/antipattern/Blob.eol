@@ -14,7 +14,6 @@ operation Component F_maxSupplierConnects() : Boolean{
 	if(not self.hasStereotype("PaRunTInstance")) return false;
 	
 	if(self.getRequireds().size() >= th_maxConnects){
-		self.println();
 		return true;
 	}
 	return false;
@@ -22,7 +21,6 @@ operation Component F_maxSupplierConnects() : Boolean{
 
 operation Component F_numMsgsIn() : Boolean{
 	var th_maxMsgs : Integer = 1;
-
 	//finds the list of critical messages into every interactions, which own the critical component	
 	if(not self.getCriticalMessages4BlobControllerAP(th_maxMsgs).isEmpty())
 		return true;
