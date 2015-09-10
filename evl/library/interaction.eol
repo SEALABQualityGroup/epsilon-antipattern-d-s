@@ -37,8 +37,36 @@ operation Interaction removeLifelineOf(component : Component) {
 }
 
 
-operation Interaction getComponentLifeline(component : Component){
-	return self.getLifelines()->selectOne(
-		lifeline : Lifeline | lifeline.getRepresents() == component.getAllInteractionProperties()->first()
-	);
+operation Interaction getComponentLifeline(component : Component) : Lifeline{
+	for(lf in self.getLifelines){
+		var represents = lf.getRepresents();
+		for(property in component.getAllInteractionProperties())
+			if(property == represents)
+				return lf;
+	}
+}
+
+operation Interaction getUseCase() : UseCase{
+	return self.getNamespace();
+}
+
+
+//messaggi in uscita da una lifeline
+operation Interaction getMessageOf(component : Component) : Sequence(Message){
+	var returnValue : Sequence(Message) = new Sequence(Message);
+	var componentLf = self.getComponentLifeline(component);
+	for (mes in self.getMessages()) { 
+		if( componentLf.getCoveredBys()->exists(iterator | iterator == mes.getSendEvent()) ){
+			returnValue.add(mes);
+		}
+	}
+	return returnValue;
+}
+
+operation Interaction getLifeline(mos : MessageOccurrenceSpecification) : Lifeline{
+	for(lf in self.getLifelines()){
+		if(lf.getCoveredBys()->exists(iterator | iterator == mos))
+			return lf;
+	}
+	return null;
 }

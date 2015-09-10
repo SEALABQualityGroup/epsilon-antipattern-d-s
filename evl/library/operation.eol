@@ -1,4 +1,4 @@
-operation Operation FresDemandGreaterOrEqualThan( th_maxOpResDemand : List(Real) ) : Boolean{
+operation Operation F_resDemandGreaterOrEqualThan( th_maxResDemand : List(Real) ) : Boolean{
 	
 	var turnback : Boolean = true;
 	
@@ -8,9 +8,9 @@ operation Operation FresDemandGreaterOrEqualThan( th_maxOpResDemand : List(Real)
 	var servCount = self.getValue(gaStep, 'servCount');
 	
 	var i : Integer = 0;
-
+	
 	for(demand in servCount){
-		if(demand.asReal() < th_maxOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+		if(demand.asReal() < th_maxResDemand.at(i).asReal() ){ //al primo demand non > della soglia relativa ritorna false
 			turnback = false;
 			break;
 		}
@@ -20,7 +20,7 @@ operation Operation FresDemandGreaterOrEqualThan( th_maxOpResDemand : List(Real)
 	return turnback;	
 }
 
-operation Operation FresDemandLesserThan( th_minOpResDemand : List(Real) ) : Boolean{
+operation Operation F_resDemandLesserThan( th_minResDemand : List(Real) ) : Boolean{
 
 	var turnback : Boolean = true;
 	
@@ -32,7 +32,7 @@ operation Operation FresDemandLesserThan( th_minOpResDemand : List(Real) ) : Boo
 	var i : Integer = 0;
 
 	for(demand in servCount){
-		if(demand.asReal() >= th_minOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+		if(demand.asReal() >= th_minResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
 			turnback = false;
 			break;
 		}
@@ -132,7 +132,8 @@ operation Operation getAllOwnMessages() : List(Message){
 	var returnValue : List(Message) = new List(Message);
 	
 	for(message in Message.allInstances){
-		if(message.signature == self){
+		
+		if(message.getSignature() == self){
 			returnValue.add(message);
 		}
 	}
@@ -158,6 +159,10 @@ operation Operation getMessageIn(interaction : Interaction) : Message{
 	return mes;
 }
 
+operation Operation getMessagesIn(interaction : Interaction) : Sequence(Message){
+	var mes = interaction.getMessages()->select(iterator : Message | iterator.getSignature() == self);
+	return mes.asSequence();
+}
 
 operation Operation getUsages() : List(Usage){
 	return Usage.allInstances->select(usage : Usage |
@@ -279,4 +284,16 @@ operation Operation moveIntoNewComponent(){
 	packageContainer.addElement(newComponent);
 	
 	self.moveIntoComponent(newComponent);	
+}
+
+
+operation Operation getOwnerInteractionOperands() : List(InteractionOperand){
+	var returnValue : List(InteractionOperand) = new List(InteractionOperand);
+	for(mes in self.getAllOwnMessages()){
+		if(mes.getSendEvent().getOwner().isTypeOf(InteractionOperand)){
+			returnValue.add(mes.getSendEvent().getOwner());
+		}
+	}
+	
+	return returnValue;
 }

@@ -1,0 +1,18 @@
+operation Message getReceiveLifeline() : Lifeline{
+	var interaction = self.getOwner(); //interaction
+	
+	var lifeline = interaction.getLifeline(self.getReceiveEvent());
+	
+	if(lifeline.isUndefined()){
+		"there was an error".println();
+		return null;
+	}
+	return lifeline;
+}
+
+
+operation Message isReturn() : Boolean{
+	if( self.getMessageSort().asString().equals("reply") )
+		return true;
+	return false;
+}

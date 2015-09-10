@@ -181,12 +181,22 @@ operation Node getArtifact() : Sequence (Artifact){
 			}
 		}
 	}
-
 	return returnValue;
 }
 
 operation Node isNetworkNode() : Boolean {
 	return self.hasStereotype("GaCommHost");
+}
+
+operation Node isReachableByNetwork() : Boolean{
+	for(cp in self.getCommunicationPaths()){
+		for(me in cp.getMemberEnds()){
+			if(me.getType().isNetworkNode()){
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 operation Node hasLowUtilization() : Boolean {

@@ -1,10 +1,5 @@
-operation Operation PaF_resDemand() : Boolean{
+operation Operation PaF_resDemand(th_maxResDemand : List(Real)) : Boolean{
 
-	var th_maxOpResDemand : List( Real ) = new List( Real );
-	th_maxOpResDemand.add(0.5); //computation
-	th_maxOpResDemand.add(0.5); //storage
-	th_maxOpResDemand.add(0.5); //bandwidth
-	
 	var turnback : Boolean = true;
 	
 	var appliedStereotypes = self.getAppliedStereotypes();
@@ -18,7 +13,7 @@ operation Operation PaF_resDemand() : Boolean{
 		turnback = false;
 	}else{
 		for(demand in servCount){
-			if(demand.asReal() < th_maxOpResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+			if(demand.asReal() < th_maxResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
 				turnback = false;
 				break;
 			}
@@ -53,9 +48,7 @@ operation Operation PaF_F_probExec() : Boolean{
 	return turnback;
 }
 
-operation Operation PaF_F_maxHwUtil() : List(Node){
-	
-	var th_maxHwUtil : Real = 0.7; //threshold per l'utilizzazione
+operation Operation PaF_F_maxHwUtil(th_maxHwUtil : Real) : List(Node){
 	
 	var listOfProcessNode : List(Node) = new List(Node);
 	
@@ -75,9 +68,8 @@ operation Operation PaF_F_maxHwUtil() : List(Node){
 	return listOfProcessNodeWithUtilizationGreater;
 }
 
-operation Operation PaF_F_throughtput() : List(UseCase){
+operation Operation PaF_F_throughtput(th_SthReq : Real) : List(UseCase){
 	
-	var th_sThReq = 0.9;
 	var turnback = false;
 
 	var listOfUseCases : List(UseCase) = self.getUseCases(); 
@@ -87,7 +79,7 @@ operation Operation PaF_F_throughtput() : List(UseCase){
 	for(useCase in listOfUseCases){
 		if(useCase.hasStereotype('GaScenario')){
 			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
-			if(throughput.isDefined() and throughput.asReal() < th_sThReq){
+			if(throughput.isDefined() and throughput.asReal() < th_SthReq){
 				listOfUseCaseWithThroughputLessThanThreshold.add(useCase);	
 			}
 		}
