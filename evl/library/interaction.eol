@@ -70,3 +70,10 @@ operation Interaction getLifeline(mos : MessageOccurrenceSpecification) : Lifeli
 	}
 	return null;
 }
+
+operation Interaction createLifelineOf(component : Component) : Lifeline {
+	var lifeline = self.createLifeline(component.getName()+"_Lifeline");
+	var componentRepresents = self.createOwnedAttribute(component.getName(), component);
+	lifeline.setRepresents(componentRepresents);
+	return lifeline;
+}

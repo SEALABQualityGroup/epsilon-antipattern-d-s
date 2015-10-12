@@ -1,9 +1,3 @@
-operation Component F_maxHwUtil(th_maxHwUtil : Real) : Boolean{
-	if(not self.getNodesWithUtilizationGreaterThan(th_maxHwUtil).isEmpty())
-		return true;
-	return false;	
-}
-
 //clone le operazioni del componente componente
 operation Component cloneOwnedOperationFrom(componentSource : Component){
 	for(op in componentSource.ownedOperation){
@@ -178,11 +172,13 @@ operation Component getNodes() : List(Node){
 }
 
 operation Component moveInterfacesRealizationFrom(component : Component, op : Operation) {
+	
 	var listOfUsedProvidedInterfaces : List(Interface) = component.getAllUsedIntefacesProvidedsBy(op);
 		
 	//sposto le interface realization delle interfacce della listOfUsedProvidedInterfaces 
 	//nel nuovo componente
 	var selfComponentListOfInterfaceRealizations : List(Interface) = component.getInterfaceRealizations();
+	
 	for(intRealization in selfComponentListOfInterfaceRealizations){
 		for(interface in listOfUsedProvidedInterfaces){
 			if(interface == intRealization.getContract() ){
@@ -446,10 +442,30 @@ operation Component getNodesWithUtilizationGreaterThan(th_maxHwUtil : Real) : Se
 
 operation Component getNodesWithNetworkUsageGreaterThan(th_maxNetUtil : Real) : Sequence(Node){
 	var returnValue : Sequence(Node) = new Sequence(Node);
-	var criticalNodes = self.getNodesWithUtilizationGreaterThan(th_maxHwUtil);
-	for (node in criticalNodes){
-		if(node.getNetworkUsage() >= th_maxNetUtil)
-			returnValue.add(node); 
+	
+	for (node in self.getNodes()){
+		var commPaths = node.getNetworkUsage().keySet();
+		for(cp in commPaths){
+			if(node.getNetworkUsage().get(cp)->exists(iterator | iterator.asReal() >= th_maxNetUtil))
+				returnValue.add(node);
+		}
+	}
+	return returnValue;
+}
+
+operation Component getNodesWithNetworkUsageLesserThan(th_minNetUtil : Real) : Sequence(Node){
+	var returnValue : Sequence(Node) = new Sequence(Node);
+	
+	for (node in self.getNodes()){
+		if(not node.getNetworkUsage().isEmpty()){
+			var commPaths = node.getNetworkUsage().keySet();
+			for(cp in commPaths){
+				if(node.getNetworkUsage().get(cp)->exists(iterator | iterator.asReal() < th_minNetUtil)){
+					returnValue.add(node);
+				}
+					
+			}
+		}
 	}
 	return returnValue;
 }
@@ -523,14 +539,20 @@ operation Component getRemoteMesIntoInteractions() : Map{
 	var seqMes : Sequence(Message) = new Sequence(Message);
 	
 	var selfInteractions = self.getInteractions();
-	
+	"%%%%%%%%%%%%%%%%%%%%%%%%".println();
+	self.getName().println();
 	for(int in selfInteractions){
 		var seqOfMes = int.getMessageOf(self);
+		int.println();
 		for(mes in seqOfMes){
-			var lf = mes.getReceiveLifeline(); //lifeline destinataria
-			var component = lf.getRepresents().getType(); //componente
-			if(component.isTypeOf(Component) and component.isRemote(self) ){ // i due componenti sono remoti
-				seqMes.add(mes);
+			if(not mes.isReturn()){
+				mes.getName().println();
+				mes.id.println();
+				var lf = mes.getReceiveLifeline(); //lifeline destinataria
+				var component = lf.getRepresents().getType(); //componente
+				if(component.isTypeOf(Component) and component.isRemote(self) ){ // i due componenti sono remoti
+					seqMes.add(mes);
+				}
 			} 
 		}
 		if(not seqMes.isEmpty() ){
@@ -538,6 +560,7 @@ operation Component getRemoteMesIntoInteractions() : Map{
 			seqMes.clear();
 		}
 	}
+	"%%%%%%%%%%%%%%%%%%%%%%%%".println();
 	return returnMap;
 }
 
@@ -559,3 +582,171 @@ operation Component countRemoteInstances(th_maxRemInst : Integer) : Boolean{
 	}
 	return false;
 }
+
+operation Component applySessionFacade() : Boolean{
+	
+	var mapIntMes = self.getRemoteMesIntoInteractions(); //mapp di interaction e mes
+	var mapRemCompFacade : Map(Component, List(Component)) = new Map(Component, List(Component));
+	"**********APPLY SessionFacade****************".println();
+	for(int in mapIntMes.keySet()){
+		for(mes in mapIntMes.get(int)){
+			if(mes.hasStereotype("GaCommStep")){
+				var op = mes.getSignature(); //operazione remota
+				var comp = op.getClass_(); //componente remoto
+				if( mapRemCompFacade.keySet().isEmpty() or not mapRemCompFacade.containsKey(comp) ){ //verifico se il componente e' stato considerato
+					
+					var listOfComponent : Sequence(Component) = new Sequence(Component);
+					
+					var localFacade : Component = self.createNewComponent(); //creo il localfacade
+					localFacade.setName("LocalFacadeWith_"+comp.getName()); 
+					
+					var remoteFacade : Component = comp.createNewComponent();
+					remoteFacade.setName("RemoteFacadeWith_"+self.getName());
+					
+					var opRemoteFacadeInterface : Interface = new Interface();
+					remoteFacade.getNearestPackage().addElement(opRemoteFacadeInterface);
+					
+					remoteFacade.getProvideds().add(opRemoteFacadeInterface);
+					opRemoteFacadeInterface.setName("opFacade_Interface");
+					
+					localFacade.getRequireds().add(opRemoteFacadeInterface);
+					localFacade.getProvideds().add(opRemoteFacadeInterface);
+					
+					listOfComponent.add(localFacade);
+					listOfComponent.add(remoteFacade);
+					
+					//------------------DEPLOY-------------------------
+					for(node in self.getNodes()){
+						localFacade.deployOn(node);
+					}
+					for(node in comp.getNodes()){
+						remoteFacade.deployOn(node);
+					}
+					var localFacadeLf = int.createLifelineOf(localFacade);
+					var remoteFacadeLf = int.createLifelineOf(remoteFacade);
+					
+					listOfComponent.add(localFacadeLf);
+					listOfComponent.add(remoteFacadeLf);
+					
+					mapRemCompFacade.put(comp, listOfComponent);
+				}
+					var localFacade = mapRemCompFacade.get(comp).first();
+					var remoteFacade = mapRemCompFacade.get(comp).second();
+					
+					var listOfUsedInterface = op.getUsedInterfaces(); //interfacce usate da op
+
+					for(interface in listOfUsedInterface){
+						("interfaccia: "+interface).println();
+						//var newInterface : Interface = interface.cloneInterfaceRealization();
+						
+						localFacade.allRealizedInterfaces().add(interface);
+						remoteFacade.getAllUsedInterfaces().add(interface);
+					}
+					
+				//----------------DYNAMIC---------------------------------
+				var localFacadeLf = mapRemCompFacade.get(comp).third();
+				var remoteFacadeLf = mapRemCompFacade.get(comp).fourth();
+				
+				var besLf : BehaviorExecutionSpecification = new BehaviorExecutionSpecification;
+				int.getFragments().add(besLf);
+				besLf.setName("BesLifeline");
+				
+				var messageEnd : ExecutionOccurrenceSpecification = new ExecutionOccurrenceSpecification;
+				int.getFragments().add(messageEnd);
+				messageEnd.setName(mes.getName()+"_End");
+				
+				var mesSelf2Lf = int.createMessage(mes.getName());
+				
+				var sendMOS : MessageOccurrenceSpecification = new MessageOccurrenceSpecification;
+				var receiveMOS : MessageOccurrenceSpecification = new MessageOccurrenceSpecification;
+				int.getFragments().add(sendMOS);
+				int.getFragments().add(receiveMOS);
+				
+				mesSelf2Lf.setSendEvent(sendMOS);
+				mesSelf2Lf.setReceiveEvent(receiveMOS);
+				
+				besLf.start = mesSelf2Lf.getSendEvent();
+				besLf.finish = messageEnd;
+				
+				localFacadeLf.getCoveredBys().add(besLf);
+				localFacadeLf.getCoveredBys().add(mesSelf2Lf.getReceiveEvent());
+				
+				int.getComponentLifeline(self).getCoveredBys().add(mesSelf2Lf.getSendEvent());
+
+				remoteFacadeLf.getCoveredBys().add(mes.getSendEvent());
+				int.getComponentLifeline(self).removeInteractionFragment(mes.getSendEvent());
+			}
+		}
+	}	
+	
+	"**********APPLY SessionFacade****************".println();
+	return false;
+}
+
+operation Component addInterfaceRealization(int : InterfaceRealization) : Boolean {
+	
+	var selfPackage = self.getNearestPackage();
+	
+	var newInt : InterfaceRealization = int.cloneInterfaceRealization();
+	
+	selfPackage.addElement(newInt);
+	
+	if(self.getInterfaceRealization().add(newInt))
+		return true;
+	return false;
+} 
+
+operation Component createNewComponent() : Component{
+	
+	var selfPackage = self.getNearestPackage(); //recupero il package contenitore dell'operazione critica
+	
+	var component : Component = new Component; //creo il componente splittato
+	selfPackage.addElement(component); //aggiungo il componente splittato al package del componente sorgente
+	
+	return component;
+}
+
+
+operation Component applyStandardFormat() : Boolean{
+
+	var mostUsedFormat = self.getTheMostUsedFormat();
+	
+	for(int in self.getInteractionsWithToB()){
+		for(mes in int.getMessagesTo(self)){
+			mes.setValue(mes.getStereotype("GaEventTrace"), "format") = mostUsedFormat;
+		}
+	}
+	return false;
+}
+
+/***************** BLOB CONTAINER ****************************/
+operation Component reduceNumberOfSupplierConnects() : Boolean{
+	
+	var listOfOperations = self.getOperations();
+	
+	while(self.getOperations().size() > th_maxConnects){
+		for(op in listOfOperations){
+			var listOfUsedInterface = op.getOfUsedInterface();
+			for(interface in listOfUsedInterface){
+				var targetComponent = interface.getTargets()->first().getOwner();
+				targetComponent.moveInto(op);
+			}
+		}
+	}
+}
+/***************** BLOB CONTROLLER ****************************/
+operation Component reduceNumberOfClientConnects() : Boolean{
+	
+	var listOfUsedInterfaces = self.getRequireds();
+	
+	while(self.getRequireds().size > th_maxConnects){
+		for(usedInt in listOfUsedInterfaces){
+			var opOfUsedInt = usedInt.getOperation();
+			self.moveInto(opOfUsedInt);
+		}
+	}
+}
+
+
+
+

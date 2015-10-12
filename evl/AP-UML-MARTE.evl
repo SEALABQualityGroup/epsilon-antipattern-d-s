@@ -1,9 +1,3 @@
-/*import "antipattern/PaF.eol";
-import "antipattern/CPS.eol";
-import "antipattern/Blob.eol";
-import "antipattern/EP.eol";
-import "antipattern/EST.eol";*/
-
 import "metric_functions.eol";
 
 //libraries
@@ -32,6 +26,7 @@ pre {
 	var th_maxRemMsgs : Integer = 3;
 	var th_maxRemInst : Integer = 1; 
 	var th_maxConnects : Integer = 4;
+	var th_maxExF : Integer = 2;
 	
 	/******** PERFORMANCE **************/
 	
@@ -50,13 +45,13 @@ pre {
 	var th_maxHwUtil : Real = 0.85;
 	
 	//Network utilization
-	var th_maxNetUtil : Real = 0.9;
-	var th_minNetUtil : Real = 0.3;
+	var th_maxNetUtil : Real = 0.9; 
+	var th_minNetUtil : Real = 0.5;
 	
 	var th_SrtReq : Real = 15; //response time
 	
-	var th_SthReq = 0.9;
-	var th_maxQL : Integer = 16;
+	var th_SthReq = 0.9; //throughput
+	var th_maxQL : Integer = 16; //queue lenght
 }
 
 /*********************************************************************************************
@@ -64,14 +59,14 @@ pre {
  *	 								Pipe and Filter 										 *
  *							Antipattern Detection and Validation					 		 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
 
 context Operation {
 	critique PaF {
 		check {
 			if(self.F_probExec() and 
 					self.F_resDemand(th_maxResDemand) and
-						(not self.F_T(th_SthReq).isEmpty() or not self.F_maxHwUtil(th_maxHwUtil).isEmpty() ) ){
+						(self.F_T(th_SthReq) or self.F_maxHwUtil(th_maxHwUtil) ) ){
 							return false;
 			}
 			return true;
@@ -80,13 +75,14 @@ context Operation {
 		fix {
 			title : "Move it to a new Component deployed to a new Node"
 			do {
+				//FIX 1
 				self.moveToNewComponentDeployedOnNewNode(); 
 			}
 		}
 		fix{
 			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
-				//FIXING 2
+				//FIX 2
 				if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
 					"there was an error".println();
 			}
@@ -94,14 +90,14 @@ context Operation {
 		fix{
 			title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
 			do{
-				//FIXING 3
+				//FIX 3
 				self.redeployOnNearLessUsedNode();
 			}
 		}
 		fix{
 			title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 			do{
-				//FIXING 4
+				//FIX 4
 				self.moveToLessCriticalComponent();
 			}
 		}
@@ -109,12 +105,13 @@ context Operation {
 	}
 }
 
+
 /*********************************************************************************************
  *																							 *
  *	 							Concurrent Processing Systems 								 *
  *							Antipattern Detection and Validation			     			 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  
 context Node {
 	critique CPS {
@@ -158,11 +155,147 @@ context Node {
 
 /*********************************************************************************************
  *																							 *
+ *	 								Extensive Processing  									 *
+ *							Antipattern Detection and Validation							 *
+ *																							 *
+ *********************************************************************************************
+ context Component {
+ 	critique ExtensiveProcessingAP{
+ 		check{
+ 			if(self.F_resDemand(th_maxResDemand, th_minResDemand) and 
+ 				self.F_probExec() and 
+ 				( self.F_maxHwUtil(th_maxHwUtil)) or self.F_RT(th_SrtReq) )
+ 				return false;
+ 			return true;
+ 		}
+ 		message : 'EP <' + self.type.name + '> ' + self.name
+ 		fix {
+			title : "Move it to a new Component deployed to a new Node"
+			
+			do {
+				self.moveToNewComponentDeployedOnNewNode(); 
+			}
+		}
+		fix{
+			title : "Move it to a new Component deployed to the less used neighbour Node"
+			do{
+				//FIXING 2
+				if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
+					"there was an error".println();
+			}
+		}
+		fix{
+			title : "Redeploy its owning Component "+self.name+" to the less used neighbour Node"
+			do{
+				//FIXING 3
+				self.redeployOnNearLessUsedNode();
+			}
+		}
+		fix{
+			title : "Change its owning Component from "+self.name+" to the one with the lowest demand"
+			do{
+				//FIXING 4
+				self.moveToLessCriticalComponent();
+			}
+		}
+ 	}
+}
+
+/*********************************************************************************************
+ *																							 *
  *								Blob Controller & Container									 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  
+context Component {
+	critique Blob_Controller {
+		check {
+			if( self.F_numClientConnects(th_maxConnects) and self.F_numMsgsIn(th_maxMsgs) and 
+				(self.F_maxHwUtil(th_maxHwUtil) or self.F_maxNetUtil(th_maxNetUtil))
+			)
+				return false;
+			return true;
+		}
+		message : 'Blob Controller <' + self.type.name + '> ' + self.name
+		fix {
+			title: "Reduce Client Connects <"+ self.name +">"
+			
+			do {
+				self.reduceNumberOfClientConnects(th_maxConnects);
+			}
+		}
+	}
+}
+
+context Component {
+	critique Blob_dataContainer {
+		check {
+			if( self.F_numSupplierConnects(th_maxConnects) and self.F_numMsgsOut(th_maxMsgs) and 
+				( self.F_maxHwUtil(th_maxHwUtil) or self.F_maxNetUtil(th_maxNetUtil) )
+			)
+				return false;
+			return true;
+		}
+		message : 'Blob Container <' + self.type.name + '> ' + self.name
+		fix {
+			title: "Reduce Supplier Connects of <"+ self.name +">"
+			do{
+				self.reduceNumberOfSupplierConnects();
+			}
+		}
+	}
+}
+
+
+/*********************************************************************************************
+ *																							 *
+ *	 								Empty Semi Truck										 *
+ *							Antipattern Detection and Validation							 *
+ *																							 *
+ *********************************************************************************************/
+ context Component {
+ 	critique EmptySemiTruck{
+ 		check{
+ 			if(self.F_numRemMsgs(th_maxRemMsgs) and 
+ 				(self.F_maxNetUtil(th_minNetUtil) or self.F_numRemInst(th_maxRemInst))
+ 			)
+ 				return false;
+ 			return true;
+ 		}
+ 		message : 'EST <' + self.type.name + '> ' + self.name
+ 		fix {
+			title : "Apply Session Facade Pattern"
+			do {
+				self.applySessionFacade();
+			}
+		}
+ 	}
+}
+/*********************************************************************************************
+ *																							 *
+ *	 								Tower of Babel											 *
+ *							Antipattern Detection and Validation							 *
+ *																							 *
+ *********************************************************************************************
+ context Component {
+ 	critique TowerOfBabel{
+ 		check{
+ 			if(self.F_numExF(th_maxExF) or self.F_maxHwUtil(th_maxHwUtil))
+ 				return false;
+ 			return true;
+ 		}
+ 		message : 'ToB <' + self.type.name + '> ' + self.name
+ 		fix {
+			title : "Apply the most used format"
+			do {
+				self.applyStandardFormat();
+			}
+		}
+ 	}
+}
+
+/*
 context Component {
 	critique Blob_Controller {
 		check {
@@ -232,51 +365,4 @@ context Component {
 	}
 }
 
-/*********************************************************************************************
- *																							 *
- *	 								Extensive Processing  									 *
- *							Antipattern Detection and Validation							 *
- *																							 *
- *********************************************************************************************/
- context Component {
- 	critique ExtensiveProcessingAP{
- 		check{
- 			if(self.F_resDemand(th_maxResDemand, th_minResDemand) and 
- 				self.F_probExec() and 
- 				( self.F_maxHwUtil(th_maxHwUtil)) or self.F_RT(th_SrtReq) )
- 				return false;
- 			return true;
- 		}
- 		message : 'EP <' + self.type.name + '> ' + self.name
- 		fix {
-			title : "EP Fix1"
-			do {
-				"EP fix 1".println();
-			}
-		}
- 	}
-}
-/*********************************************************************************************
- *																							 *
- *	 								Empty Semi Truck
- *							Antipattern Detection and Validation							 *
- *																							 *
- *********************************************************************************************/
- context Component {
- 	critique EmptySemiTruck{
- 		check{
- 			if(self.F_numRemMsgs(th_maxRemMsgs) and self.F_numRemInst(th_maxRemInst)
- 				//(self.F_maxNetUtil(th_minNetUtil) or self.F_numRemInst(th_maxRemInst))
- 			)
- 				return false;
- 			return true;
- 		}
- 		message : 'EST <' + self.type.name + '> ' + self.name
- 		fix {
-			title : "EST fix1"
-			do {
-				"EST fix1".println();
-			}
-		}
- 	}
-}
+*/

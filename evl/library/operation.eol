@@ -41,18 +41,6 @@ operation Operation F_resDemandLesserThan( th_minResDemand : List(Real) ) : Bool
 	return turnback;	
 }
 
-
-//clone una interface realization
-operation InterfaceRealization cloneInterfaceRealization() : InterfaceRealization {
-	var newRealization : InterfaceRealization = new InterfaceRealization;
-	newRealization.name = self.name;
-	newRealization.client = self.client;
-	newRealization.supplier = self.supplier;
-	newRealization.contract = self.contract;
-	
-	return newRealization;
-}
-
 //clone una operation
 operation Operation cloneOperationInto(component : Component) : Operation{
 	var newOperation = new Operation;
@@ -116,8 +104,9 @@ operation Operation splitComponent() : Component{
 	var selfPackage = self.getNearestPackage(); //recupero il package contenitore dell'operazione critica
 	
 	var splittedComponent : Component = new Component; //creo il componente splittato
-	splittedComponent.name = self.class.name + " Splitted";
 	selfPackage.addElement(splittedComponent); //aggiungo il componente splittato al package del componente sorgente
+
+	splittedComponent.name = self.class.name + " Splitted";
 	splittedComponent.cloneAppliedStereotypesFrom(selfComponent); //clono gli stessi stereotipi del componente sorgente
 	
 	splittedComponent.moveInterfacesRealizationFrom(selfComponent, self);
@@ -169,6 +158,17 @@ operation Operation getUsages() : List(Usage){
 				usage.getSuppliers()->exists(supplier : Operation | supplier == self) or
 					usage.getClients()->exists(client : Operation | client == self)
 			);
+}
+
+operation Operation getUsedInterfaces() : Sequence(Interface){
+	var usages = self.getUsages();	
+	var returnValue : Sequence(Interface) = new Sequence(Interface);
+	for(usage in usages){
+		if(usage.getClients()->exists(cli | cli.getOwner().isTypeOf(Interface))){
+			returnValue.add(usage.getClients()->selectOne(cli | cli.getOwner().isTypeOf(Interface)).getOwner());
+		}
+	}	
+	return returnValue;
 }
 
 
@@ -224,9 +224,8 @@ operation Operation redeployOnNearLessUsedNode() : Boolean{
 	
 	return true;
 }
-
-//individuare un nome migliore :)
 //TODO controllare con gli altri AP, modificato il comportamento del fixing
+
 operation Operation dynamicFixing(component : Component) {
 	var interaction = self.getAllInteractions()->first(); //TODO controllare potrebbe lavorare su un interaction non corretto
 	var sourceLifeline = component.getLifeline(interaction);

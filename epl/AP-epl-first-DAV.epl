@@ -15,63 +15,52 @@ import "../evl/library/lifeline.eol";
 //fixing
 import "../evl/fixing/splitting.eol";
 
-
 /*********************************************************************************************
  *																							 *
  *	 								Pipe and Filter 										 *
  *							Antipattern Detection and Validation					 		 *
  *																							 *
  *********************************************************************************************/
-
+ 
+//Fix 1
 pattern Move_it_to_a_new_Component_deployed_to_a_new_Node
 	mainRole : Operation {
 	match : 
-		mainRole.hasStereotype('GaStep') and mainRole.hasStereotype('GaScenario') and
-		mainRole.PaF_F_probExec() and 
-		mainRole.PaF_resDemand() and
-		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() )  				
+		mainRole.F_probExec() and mainRole.F_resDemand(th_maxResDemand) and
+		( mainRole.F_T(th_SthReq) or op.F_maxHwUtil(th_maxHwUtil) )  				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		"1".println();
 		mainRole.moveToNewComponentDeployedOnNewNode();
 	}
 }
-
+//Fix 2
 pattern Move_it_to_a_new_Component_deployed_to_the_less_used_neighbour_Node
 	mainRole : Operation {
 	match : 
-		mainRole.hasStereotype('GaStep') and mainRole.hasStereotype('GaScenario') and
-		mainRole.PaF_F_probExec() and 
-		mainRole.PaF_resDemand() and
-		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
+		mainRole.F_probExec() and mainRole.F_resDemand(th_maxResDemand) and
+		( mainRole.F_T(th_SthReq) or op.F_maxHwUtil(th_maxHwUtil) )  				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		"2".println();
 		mainRole.moveToNewComponentDeployedOnNearLessUsedNode();
 	}
 }
-
+//Fix 3
 pattern Redeploy_owner_Component_to_the_less_used_neighbour_Node
 	mainRole : Operation {
 	match : 
-		mainRole.hasStereotype('GaStep') and mainRole.hasStereotype('GaScenario') and
-		mainRole.PaF_F_probExec() and 
-		mainRole.PaF_resDemand() and
-		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
+		mainRole.F_probExec() and mainRole.F_resDemand(th_maxResDemand) and
+		( mainRole.F_T(th_SthReq) or op.F_maxHwUtil(th_maxHwUtil) )  				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
-		"3".println();
 		mainRole.redeployOnNearLessUsedNode();
 	}
 }
-
+//Fix 4
 pattern Move_it_to_the_less_critical_Component
 	mainRole : Operation {
 	match : 
-		mainRole.hasStereotype('GaStep') and mainRole.hasStereotype('GaScenario') and
-		mainRole.PaF_F_probExec() and 
-		mainRole.PaF_resDemand() and
-		(not mainRole.PaF_F_throughtput().isEmpty() or not op.PaF_F_maxHwUtil().isEmpty() ) 				
+		mainRole.F_probExec() and mainRole.F_resDemand(th_maxResDemand) and
+		( mainRole.F_T(th_SthReq) or op.F_maxHwUtil(th_maxHwUtil) )  				
 	do {
 		UserInput.inform("The Operation named <"+mainRole.name+"> is a PaF! The solution will be applied!");
 		"4".println();

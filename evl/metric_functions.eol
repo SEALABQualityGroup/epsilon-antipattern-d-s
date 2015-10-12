@@ -5,16 +5,13 @@
  *********************************************************************************************/
 
 operation Operation F_probExec() : Boolean{
-	
 	var listOfMes = self.getAllOwnMessages();
 	var listOfIntOperands = self.getOwnerInteractionOperands();
 	
 	if(listOfMes.isEmpty())
 		return false; //non ci sono mes dell'op quindi prob=0
-	
 	if(listOfIntOperands.isEmpty())
 		return true; //se non e' in un interaction operand e' sicuramente eseguita almeno una volta
-	
 	for(int in listOfIntOperands){
 		if( int.hasStereotype("GaStep") and (int.getValue(int.getStereotype("GaStep"), "prob").asReal() == 1) )
 			return true; //op in un interaction operand eseguita con prob 1
@@ -43,13 +40,9 @@ operation Component F_probExec() : Boolean {
 
 operation Component F_numClientConnects(th_maxConnects : Integer) : Boolean{
 	
-	if(not self.hasStereotype("PaRunTInstance")) return false;
-	
-	"---------------numClient--------------".println();
-	self.println();	
-	self.getRequireds().size().println();
-	"--------------------------------------".println();
-	
+	if(not self.hasStereotype("PaRunTInstance")) 
+		return false;
+
 	if(self.getRequireds().size() >= th_maxConnects){
 		return true;
 	}
@@ -81,15 +74,22 @@ operation Component F_numSupplierConnects(th_maxConnects : Integer) : Boolean{
 }
 
 operation Component F_numRemMsgs(th_maxRemMsgs : Integer) : Boolean{
-	
 	if(self.countRemoteMessages(th_maxRemMsgs))
-		return true;	
+		return true;
+		
 	return false;
 }
 
 operation Component F_numRemInst(th_maxRemInst : Integer) : Boolean{
 	if(self.countRemoteInstances(th_maxRemInst))
 		return true;
+	return false;
+}
+
+operation Component F_numExF(th_maxExF : Integer ) : Boolean{
+	if(not self.hasStereotype("PaRunTInstance")) 
+		return false;
+	
 	return false;
 }
 
@@ -100,6 +100,37 @@ operation Component F_numRemInst(th_maxRemInst : Integer) : Boolean{
  *********************************************************************************************/
 operation Operation F_resDemand(th_maxResDemand : List(Real)) : Boolean{
 
+	var turnback : Boolean = true;
+	
+	var appliedStereotypes = self.getAppliedStereotypes();
+	
+	if(not self.hasStereotype("GaStep"))
+		return false;
+		
+	var gaStep = self.getStereotype('GaStep');
+	var servCount = self.getValue(gaStep, 'servCount');
+	
+	var i : Integer = 0;
+
+	if(servCount.isDefined() and servCount.size() == 0){
+		turnback = false;
+	}else{
+		for(demand in servCount){
+			if(demand.asReal() < th_maxResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
+				turnback = false;
+				break;
+			}
+			i = i+1;
+		}
+	}
+	return turnback;	
+}
+
+operation Operation F_resDemand() : Boolean{
+	var th_maxResDemand : List( Real ) = new List( Real );
+	th_maxResDemand.add(15); //computation
+	th_maxResDemand.add(7); //storage
+	th_maxResDemand.add(5); //bandwidth
 	var turnback : Boolean = true;
 	
 	var appliedStereotypes = self.getAppliedStereotypes();
@@ -141,7 +172,7 @@ operation Component F_resDemand(th_maxOpResDemand : List( Real ), th_minResDeman
 	return false;
 }
 
-operation Operation F_T(th_SthReq : Real) : List(UseCase){
+operation Operation F_T(th_SthReq : Real) : Boolean{
 	
 	var listOfUseCases : List(UseCase) = self.getUseCases(); 
 	
@@ -155,11 +186,27 @@ operation Operation F_T(th_SthReq : Real) : List(UseCase){
 			}
 		}
 	}
-	listOfUseCaseWithThroughputLessThanThreshold.println();
-	return listOfUseCaseWithThroughputLessThanThreshold;
+	return listOfUseCaseWithThroughputLessThanThreshold.isEmpty();
 }
 
-operation Operation F_maxHwUtil(th_maxHwUtil : Real) : List(Node){
+operation Operation F_T() : Boolean{
+	var th_SthReq = 0.9; //throughput
+	var listOfUseCases : List(UseCase) = self.getUseCases(); 
+	
+	var listOfUseCaseWithThroughputLessThanThreshold : List(UseCase) = new List(UseCase);
+
+	for(useCase in listOfUseCases){
+		if(useCase.hasStereotype('GaScenario')){
+			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
+			if(throughput.isDefined() and throughput.asReal() < th_SthReq){
+				listOfUseCaseWithThroughputLessThanThreshold.add(useCase);	
+			}
+		}
+	}
+	return listOfUseCaseWithThroughputLessThanThreshold.isEmpty();
+}
+
+operation Operation F_maxHwUtil(th_maxHwUtil : Real) : Boolean{
 	
 	var listOfProcessNode : List(Node) = new List(Node);
 	
@@ -175,7 +222,26 @@ operation Operation F_maxHwUtil(th_maxHwUtil : Real) : List(Node){
 			}
 		}
 	}
-	return listOfProcessNodeWithUtilizationGreater;
+	return listOfProcessNodeWithUtilizationGreater.isEmpty();
+}
+
+operation Operation F_maxHwUtil() : Boolean{
+	var th_maxHwUtil : Real = 0.85;
+	var listOfProcessNode : List(Node) = new List(Node);
+	
+	listOfProcessNode = self.getProcessNodes();
+	
+	var listOfProcessNodeWithUtilizationGreater : List(Node) = new List(Node);
+	
+	for(node in listOfProcessNode){
+		if(node.hasStereotype('GaExecHost') ){
+			var utilization = node.getValue(node.getStereotype('GaExecHost'), 'utilization')->first();
+	 		if( utilization.isDefined() and utilization.asReal() >= th_maxHwUtil ){
+				listOfProcessNodeWithUtilizationGreater.add(node);
+			}
+		}
+	}
+	return listOfProcessNodeWithUtilizationGreater.isEmpty();
 }
 
 operation Node F_maxHwUtil(th_maxHwUtil : Real) : Boolean {
@@ -212,6 +278,12 @@ operation Node F_maxQL(th_maxQL : Integer) : Boolean {
 
 operation Component F_maxNetUtil(th_maxNetUtil : Real) : Boolean{
 	if(not self.getNodesWithNetworkUsageGreaterThan(th_maxNetUtil).isEmpty())
+		return true;
+	return false;
+}
+
+operation Component F_minNetUtil(th_minNetUtil : Real) : Boolean{
+	if(not self.getNodesWithNetworkUsageLesserThan(th_minNetUtil).isEmpty())
 		return true;
 	return false;
 }

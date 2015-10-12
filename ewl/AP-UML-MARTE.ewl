@@ -1,5 +1,5 @@
-import "../evl/antipattern/PaF.eol";
-//import "antipattern/EP.eol";
+//import "../evl/antipattern/PaF.eol";
+import "../evl/metric_functions.eol";
 
 //libraries
 import "../evl/library/element.eol";
@@ -11,9 +11,15 @@ import "../evl/library/artifact.eol";
 import "../evl/library/manifestation.eol";
 import "../evl/library/node.eol";
 import "../evl/library/lifeline.eol";
+import "../evl/library/interface.eol";
+import "../evl/library/message.eol";
 
 //fixing
 import "../evl/fixing/splitting.eol";
+
+//thresholds
+
+import "thresholds.eol";
 
 
 /*********************************************************************************************
@@ -23,63 +29,48 @@ import "../evl/fixing/splitting.eol";
  *																							 *
  *********************************************************************************************/
 
-//FIXING 1
+//FIX 1
 wizard newComponent {
 	guard : 
 		self.isTypeOf(Operation) and
-			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
-				self.PaF_F_probExec() and 
-					self.PaF_resDemand() and
-						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() ) 
-					
+			self.F_probExec() and self.F_resDemand() and
+						( self.F_T() or self.F_maxHwUtil() ) 			
 	title : "Move it to a new Component deployed to a new Node"
 	do {
- 		self.moveToNewComponentDeployedOnNewNode(20.0);
+ 		self.moveToNewComponentDeployedOnNewNode();
 	} 
 }
-
-//FIXING 2
+//FIX 2
 wizard newComponent_N_L_U_Node {
 	guard : 
 		self.isTypeOf(Operation) and
-			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
-				self.PaF_F_probExec() and 
-					self.PaF_resDemand() and
-						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() )  
-					
+			self.F_probExec() and self.F_resDemand() and
+						( self.F_T() or self.F_maxHwUtil() )  		
 	title : "Move it to a new Component deployed to the less used neighbour Node"
 	do {
- 		self.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
+ 		self.moveToNewComponentDeployedOnNearLessUsedNode();
 	} 
 }
-
-//FIXING 3
+//FIX 3
 wizard redeployComponent_N_L_U_Node {
 	guard : 
 		self.isTypeOf(Operation) and
-			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
-				self.PaF_F_probExec() and 
-					self.PaF_resDemand() and
-						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() ) 
-					
+			self.F_probExec() and self.F_resDemand() and
+						( self.F_T() or self.F_maxHwUtil() ) 		
 	title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
 	do {
- 		self.redeployOnNearLessUsedNode(20.0);
+ 		self.redeployOnNearLessUsedNode();
 	} 
 }
-
-//FIXING 4
+//FIX 4
 wizard redeployComponent_N_L_U_Node {
 	guard : 
 		self.isTypeOf(Operation) and
-			self.hasStereotype('GaStep') and self.hasStereotype('GaScenario') and
-				self.PaF_F_probExec() and 
-					self.PaF_resDemand() and
-						(not self.PaF_F_throughtput().isEmpty() or not self.PaF_F_maxHwUtil().isEmpty() ) 
-					
+			self.F_probExec() and self.F_resDemand() and
+						( self.F_T() or self.F_maxHwUtil() ) 
 	title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 	do {
- 		self.moveToLessUsedComponent(20.0);
+ 		self.moveToLessUsedComponent();
 	} 
 }
 
@@ -92,8 +83,9 @@ wizard redeployComponent_N_L_U_Node {
  *																							 *
  *********************************************************************************************/
  
-wizard Node {
-		guard: self.F_maxQl() and self.F_HwUtil()
+/*wizard Node {
+		guard: 
+			self.F_maxQl() and self.F_HwUtil()
 		
 		title : "Move it to a new Component deployed to a new Node"
 		do {
@@ -127,4 +119,4 @@ wizard Node{
 		//FIXING 4
 		self.moveToLessCriticalComponent();
 	}
-}
+}*/

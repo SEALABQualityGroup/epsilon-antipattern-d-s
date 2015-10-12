@@ -253,18 +253,15 @@ operation Node getLessUsedNode() : Node{
 	return lessUsedNode;
 }
 
-operation Node getNetworkUsage() : Real{
-	var networkUsage : Real = 0.0;
+operation Node getNetworkUsage() : Map{
+	var networkUsage : Map(CommunicationPath, Sequence(Real)) = new Map(CommunicationPath, Sequence(Real));
 	for(cp in self.getCommunicationPaths()){
-		if(cp.hasStereotype("GaCommChannel")){
-			networkUsage = networkUsage + cp.getValue(cp.getStereotype("GaCommChannel"),"utilization").asReal();
+		if(cp.hasStereotype("GaCommHost")){
+			var netUsage = cp.getValue(cp.getStereotype("GaCommHost"),"utilization");
+			if(netUsage.isDefined())
+				networkUsage.put(cp, cp.getValue(cp.getStereotype("GaCommHost"),"utilization").asSequence());
 		}
 	}
-	
-	if(not self.getCommunicationPaths.isEmpty()){
-		networkUsage = networkUsage / self.getCommunicationPaths().size();	
-	}
-	
 	return networkUsage;
 }
 

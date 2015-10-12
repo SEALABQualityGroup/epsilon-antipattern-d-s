@@ -146,7 +146,6 @@ operation Operation redeployOnNearLessUsedNode() : Boolean {
 
 
 operation Operation moveToLessCriticalComponent() : Boolean{
-	//TODO
 	var lessUsedComponent : Component = Component.allInstances->first();
 	var sourceComponent : Component = self.class;
 	
@@ -186,3 +185,4 @@ operation Operation moveToLessCriticalComponent() : Boolean{
 	//sourceLifeline.removeCovered(sourceBES);
 	sourceLifeline.removeCovered(sourceBES.getFinish());
 }
+

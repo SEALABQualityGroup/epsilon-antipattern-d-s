@@ -17,7 +17,7 @@ import "../evl/library/lifeline.eol";
 import "../evl/fixing/splitting.eol";
 
 
-//FIXING 1
+//FIX 1
 pattern newComponent
 	op : Operation
 	guard : 
@@ -33,15 +33,14 @@ pattern newComponent
 	
 		switch (caseValue) {
 			case "1" : 
-				op.moveToNewComponentDeployedOnNewNode(20.0);
+				op.moveToNewComponentDeployedOnNewNode();
 			case "2" :
-				op.moveToNewComponentDeployedOnNearLessUsedNode(20.0);
+				op.moveToNewComponentDeployedOnNearLessUsedNode();
 			case "3" : 
 				 op.moveToLessUsedComponent(20.0);
 			default:
-				op.moveToNewComponentDeployedOnNewNode(20.0);
+				op.moveToNewComponentDeployedOnNewNode();
 		}
-		//op.moveToNewComponentDeployedOnNewNode(20.0);
 	}
 	nomatch{
 		"Your SW is AntiPattern free".println();

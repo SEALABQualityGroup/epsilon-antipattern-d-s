@@ -1,0 +1,10 @@
+//clone una interface realization
+operation InterfaceRealization cloneInterfaceRealization() : InterfaceRealization {
+	var newRealization : InterfaceRealization = new InterfaceRealization;
+	newRealization.name = self.name;
+	newRealization.client = self.client;
+	newRealization.supplier = self.supplier;
+	newRealization.contract = self.contract;
+	
+	return newRealization;
+}
