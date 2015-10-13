@@ -709,14 +709,77 @@ operation Component createNewComponent() : Component{
 
 operation Component applyStandardFormat() : Boolean{
 
-	var mostUsedFormat = self.getTheMostUsedFormat();
+	var mostUsedFormat = self.getTheMostUsedFormat(); //mappa(interaction, map(formato, utilizzo))
 	
-	for(int in self.getInteractionsWithToB()){
-		for(mes in int.getMessagesTo(self)){
-			mes.setValue(mes.getStereotype("GaEventTrace"), "format") = mostUsedFormat;
+	for(int in mostUsedFormat.keySet()){
+		var stdFormat = mostUsedFormat.get(int).keySet()->first();
+		for(mes in int.getMessageOf(self)){
+			if(mes.hasStereotype("GaEventTrace") and mes.getValue(mes.getStereotype("GaEventTrace"), "format").isDefined())
+				mes.setValue(mes.getStereotype("GaEventTrace"), "format", stdFormat.asString());
 		}
 	}
 	return false;
+}
+
+operation Component getUsedFormat() : Any{
+	
+	var listOfInteraction = self.getInteractions();
+	
+	var mapFormatTypeUsage : Map(String, Integer) = new Map(String, Integer);
+	var mapUsedFormat : Map(Interaction, Map);
+	
+	for(int in listOfInteraction){
+		
+		var listOfMes = int.getMessageOf(self);
+		for(mes in listOfMes){
+			if(mes.hasStereotype("GaEventTrace") and mes.getValue(mes.getStereotype("GaEventTrace"), "format").isDefined() ){
+				if( mapFormatTypeUsage.isEmpty() or 
+						not mapFormatTypeUsage.containsKey(mes.getValue(mes.getStereotype("GaEventTrace"), "format"))){
+					mapFormatTypeUsage.put(mes.getValue(mes.getStereotype("GaEventTrace"), "format"), 1);
+					("formato: ".print()+mes.getValue(mes.getStereotype("GaEventTrace"), "format").print()+" utilizzato: 1".print()).println();
+					"".println();
+				}
+				else if(mapFormatTypeUsage.containsKey(mes.getValue(mes.getStereotype("GaEventTrace"), "format"))){
+					var count = mapFormatTypeUsage.get(mes.getValue(mes.getStereotype("GaEventTrace"), "format")).asInteger() + 1;
+					("formato: ".print()+mes.getValue(mes.getStereotype("GaEventTrace"), "format").print()+" utilizzato: "+count.print()).println();
+					"".println();
+					mapFormatTypeUsage.put(mes.getValue(mes.getStereotype("GaEventTrace"), "format"), count);
+				}
+			}
+		}
+		if(not mapFormatTypeUsage.isEmpty())
+			mapUsedFormat.put(int, mapFormatTypeUsage);
+	}
+	return mapUsedFormat;
+}
+
+
+operation Component getTheMostUsedFormat() : Any{
+	
+	var listOfInteraction = self.getInteractions();
+	
+	var mapMostUsedFormat : Map(Interaction, Map);
+	
+	for(int in self.getUsedFormat().keySet()){
+		mapMostUsedFormat.put(int, self.getUsedFormat().get(int).getMostUsed());
+	}
+
+	return mapMostUsedFormat;
+}
+
+operation Map getMostUsed() : Map {
+	
+	var max = 0;
+	var mapFormat : Map(String, Integer);
+	var maxFormat : String;
+	for(format in self.keySet()){
+		if(self.get(format).asInteger() > max){
+			max = self.get(format).asInteger();
+			maxFormat = format;
+		}
+	}
+	mapFormat.put(maxFormat, max);
+	return mapFormat;
 }
 
 /***************** BLOB CONTAINER ****************************/
@@ -746,7 +809,3 @@ operation Component reduceNumberOfClientConnects() : Boolean{
 		}
 	}
 }
-
-
-
-

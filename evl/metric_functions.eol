@@ -87,9 +87,13 @@ operation Component F_numRemInst(th_maxRemInst : Integer) : Boolean{
 }
 
 operation Component F_numExF(th_maxExF : Integer ) : Boolean{
-	if(not self.hasStereotype("PaRunTInstance")) 
-		return false;
-	
+	if(self.hasStereotype("PaRunTInstance") and not self.getUsedFormat().isEmpty()){
+		for(int in self.getUsedFormat().keySet()){
+			if(self.getUsedFormat().get(int).keySet().size() >= th_maxExF ){
+				return true;
+			}
+		}
+	}
 	return false;
 }
 

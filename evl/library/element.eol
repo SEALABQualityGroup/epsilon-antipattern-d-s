@@ -26,6 +26,20 @@ operation Element setAttributeValueFrom(stereotype : Stereotype, element : Eleme
 	}	
 }
 
+//clone gli attributi interni dello stereotipo
+operation Element setTaggedValue(stereotype : Stereotype, tag : String, value : Any){
+	var stereotypeAttr = stereotype.getAttributes();
+	for(attr in stereotypeAttr){
+		if(attr.name <> "base_Element" and attr.name <> "base_NamedElement" and attr.name == tag)
+		{ 
+			var attrValue = self.getValue(stereotype, tag);
+			if(attrValue.isDefined()){
+				self.setValue(stereotype, attr.name, attrValue);
+			}
+		}
+	}	
+}
+
 operation Element hasStereotype(stereotypeName : String) : Boolean {
 	return self.getAppliedStereotypes()->exists(s | s.name = stereotypeName);
 }

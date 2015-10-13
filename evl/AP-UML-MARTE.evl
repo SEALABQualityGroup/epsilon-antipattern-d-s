@@ -253,7 +253,7 @@ context Component {
  *	 								Empty Semi Truck										 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  context Component {
  	critique EmptySemiTruck{
  		check{
@@ -277,11 +277,11 @@ context Component {
  *	 								Tower of Babel											 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
  context Component {
  	critique TowerOfBabel{
  		check{
- 			if(self.F_numExF(th_maxExF) or self.F_maxHwUtil(th_maxHwUtil))
+ 			if(self.F_numExF(th_maxExF) and self.F_maxHwUtil(th_maxHwUtil))
  				return false;
  			return true;
  		}
