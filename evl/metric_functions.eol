@@ -7,7 +7,8 @@
 operation Operation F_probExec() : Boolean{
 	var listOfMes = self.getAllOwnMessages();
 	var listOfIntOperands = self.getOwnerInteractionOperands();
-	
+	if(not self.hasStereotype("GaStep"))
+		return false;
 	if(listOfMes.isEmpty())
 		return false; //non ci sono mes dell'op quindi prob=0
 	if(listOfIntOperands.isEmpty())
@@ -106,20 +107,20 @@ operation Operation F_resDemand(th_maxResDemand : List(Real)) : Boolean{
 
 	var turnback : Boolean = true;
 	
-	var appliedStereotypes = self.getAppliedStereotypes();
+	var owner = self.getOwner();
 	
-	if(not self.hasStereotype("GaStep"))
+	if(not owner.hasStereotype("GaStep"))
 		return false;
-		
-	var gaStep = self.getStereotype('GaStep');
-	var servCount = self.getValue(gaStep, 'servCount');
+	
+	var gaStep = owner.getStereotype('GaStep');
+	var servCount = owner.getValue(gaStep, 'servCount');
 	
 	var i : Integer = 0;
-
 	if(servCount.isDefined() and servCount.size() == 0){
 		turnback = false;
 	}else{
 		for(demand in servCount){
+			
 			if(demand.asReal() < th_maxResDemand.at(i) ){ //al primo demand non > della soglia relativa ritorna false
 				turnback = false;
 				break;
@@ -186,7 +187,7 @@ operation Operation F_T(th_SthReq : Real) : Boolean{
 		if(useCase.hasStereotype('GaScenario')){
 			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
 			if(throughput.isDefined() and throughput.asReal() < th_SthReq){
-				listOfUseCaseWithThroughputLessThanThreshold.add(useCase);	
+				listOfUseCaseWithThroughputLessThanThreshold.add(useCase);
 			}
 		}
 	}
@@ -198,7 +199,7 @@ operation Operation F_T() : Boolean{
 	var listOfUseCases : List(UseCase) = self.getUseCases(); 
 	
 	var listOfUseCaseWithThroughputLessThanThreshold : List(UseCase) = new List(UseCase);
-
+	
 	for(useCase in listOfUseCases){
 		if(useCase.hasStereotype('GaScenario')){
 			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();

@@ -1,7 +1,7 @@
 //verifico se l'artifact rappresenta il componente passato per parametro
-operation Artifact hasRepresentationOf(component : Component) : Boolean {
+operation Artifact hasRepresentationOf(classifier : Classifier) : Boolean {
 	for(manifestation in self.manifestation){
-		if(manifestation.utilizedElement == component){
+		if(manifestation.utilizedElement == classifier){
 			return true;
 		}
 	}
@@ -18,4 +18,9 @@ operation Artifact getDeploymentNode() : Node{
 
 operation Artifact getManifestedComponents() : Sequence(Component){
 	self.getManifestations()->select(man : Manifestation | man.getUtilizedElement().isTypeOf(Component) );
+}
+
+
+operation Artifact getManifestedClassifier() : Sequence(Classifier){
+	self.getManifestations()->select(man : Manifestation | man.getUtilizedElement().isTypeOf(Classifier) );
 }

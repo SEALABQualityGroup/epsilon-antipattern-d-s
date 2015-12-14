@@ -1,0 +1,50 @@
+operation Classifier getProvidedInterfaces() : Sequence(InterfaceRealization) {
+	return self.getInterfaceRealizations()->collect(cd | cd.supplier->first())->asSequence();
+}
+
+operation Component getInterfaceRealizations() : Sequence(InterfaceRealization) {
+	"bingo".println();
+	return self.clientDependency->select(cd | cd.isTypeOf(InterfaceRealization))->asSequence();
+}
+
+operation Classifier getAllUsedIntefacesProvidedsBy (op : Operation) : List(Interface){
+	var returnValue : List(Interface) = new List(Interface);
+	
+	var listOfUsage = op.getNearestPackage().getUsageRelations();
+	
+	for (proInterface in self.getProvidedInterfaces() ){
+		for(usage in listOfUsage){
+			if(usage.supplier->first() == op){
+				for(iOp in proInterface.getOwnedOperations()){
+					if(usage.client->first() == iOp){
+						returnValue.add(proInterface);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	//le sole interfacce utilizzate dall'operzione critica
+	for(proInterface in returnValue){
+		for(usage in listOfUsage){
+			if(usage.supplier->first() <> self and usage.client->first == proInterface){
+				returnValue.remove(proInterface);
+			}
+		}
+	}
+	
+	return returnValue;
+}
+
+//recupero la lista di usage proprie del componente
+operation Classifier getUsageRelations() : List(Usage){
+	var returnValue : List(Usage) = new List(Usage);
+	
+	for(relation in Usage.allInstances){
+		if( relation.isTypeOf(Usage) and relation.owner == self){
+			returnValue.add(relation);
+		}
+	}
+	return returnValue;
+}

@@ -133,14 +133,6 @@ operation Component getAllInteractionProperties() : List(Property){
 	return returnValue;
 }
 
-operation Component getProvidedInterfaces() : Sequence(InterfaceRealization) {
-	return self.getInterfaceRealizations()->collect(cd | cd.supplier->first())->asSequence();
-}
-
-operation Component getInterfaceRealizations() : Sequence(InterfaceRealization) {
-	return self.clientDependency->select(cd | cd.isTypeOf(InterfaceRealization))->asSequence();
-}
-
 operation Component getLifeline(interaction : Interaction) : Lifeline{
 	for(lf in interaction.getLifelines()){
 		if(lf.represents.type == self){
@@ -539,8 +531,6 @@ operation Component getRemoteMesIntoInteractions() : Map{
 	var seqMes : Sequence(Message) = new Sequence(Message);
 	
 	var selfInteractions = self.getInteractions();
-	"%%%%%%%%%%%%%%%%%%%%%%%%".println();
-	self.getName().println();
 	for(int in selfInteractions){
 		var seqOfMes = int.getMessageOf(self);
 		int.println();
@@ -560,7 +550,6 @@ operation Component getRemoteMesIntoInteractions() : Map{
 			seqMes.clear();
 		}
 	}
-	"%%%%%%%%%%%%%%%%%%%%%%%%".println();
 	return returnMap;
 }
 

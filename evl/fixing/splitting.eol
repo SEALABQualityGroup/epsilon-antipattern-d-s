@@ -71,8 +71,23 @@ operation Operation splittingComponent( numberOfSplitting : Integer, percentage 
  *********************************************************************************************/
 operation Operation moveToNewComponentDeployedOnNewNode() : Boolean {	
 	//static
-	var sourceComponent : Component = self.class;
+	var sourceComponent : Component = self.getOwner();
 	var splittedComponent = self.splitComponent();
+	
+	//deploy
+	splittedComponent.deployOnNewNodes(sourceComponent);
+	splittedComponent.moveOperation(self); //sposta l'operazione sul componente appena creato
+	
+	//dynamic
+	self.dynamicFixing(sourceComponent);
+	
+	return true;
+}
+
+operation Operation moveToNewClassDeployedOnNewNode() : Boolean {	
+	//static
+	var sourceClass : Class = self.getOwner();
+	var splittedClass = self.splitComponent();
 	
 	//deploy
 	splittedComponent.deployOnNewNodes(sourceComponent);

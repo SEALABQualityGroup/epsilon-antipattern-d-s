@@ -3,7 +3,11 @@ import "metric_functions.eol";
 //libraries
 import "library/element.eol";
 import "library/package.eol";
+
+import "library/classifier.eol";
+import "library/class.eol";
 import "library/component.eol";
+
 import "library/operation.eol";
 import "library/interaction.eol";
 import "library/artifact.eol";
@@ -13,7 +17,6 @@ import "library/lifeline.eol";
 import "library/interface.eol";
 import "library/message.eol";
 
-import "fixing/splitting.eol";
 
 /*********************************************************************************************
  *																							 *
@@ -59,14 +62,14 @@ pre {
  *	 								Pipe and Filter 										 *
  *							Antipattern Detection and Validation					 		 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
 
 context Operation {
 	critique PaF {
 		check {
 			if(self.F_probExec() and 
 					self.F_resDemand(th_maxResDemand) and
-						(self.F_T(th_SthReq) or self.F_maxHwUtil(th_maxHwUtil) ) ){
+						(self.F_T(th_SthReq) or not self.F_maxHwUtil(th_maxHwUtil) ) ){
 							return false;
 			}
 			return true;
@@ -76,7 +79,8 @@ context Operation {
 			title : "Move it to a new Component deployed to a new Node"
 			do {
 				//FIX 1
-				self.moveToNewComponentDeployedOnNewNode(); 
+				//self.moveToNewComponentDeployedOnNewNode(); 
+				self.moveToNewClassDeployedOnNewNode(); 
 			}
 		}
 		fix{
@@ -111,7 +115,7 @@ context Operation {
  *	 							Concurrent Processing Systems 								 *
  *							Antipattern Detection and Validation			     			 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
  
 context Node {
 	critique CPS {
@@ -158,7 +162,7 @@ context Node {
  *	 								Extensive Processing  									 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
  context Component {
  	critique ExtensiveProcessingAP{
  		check{
@@ -206,7 +210,7 @@ context Node {
  *								Blob Controller & Container									 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
  
 context Component {
 	critique Blob_Controller {
@@ -253,7 +257,7 @@ context Component {
  *	 								Empty Semi Truck										 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************
+ *********************************************************************************************/
  context Component {
  	critique EmptySemiTruck{
  		check{
