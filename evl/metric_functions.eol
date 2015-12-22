@@ -107,13 +107,11 @@ operation Operation F_resDemand(th_maxResDemand : List(Real)) : Boolean{
 
 	var turnback : Boolean = true;
 	
-	var owner = self.getOwner();
-	
-	if(not owner.hasStereotype("GaStep"))
+	if(not self.hasStereotype("GaStep"))
 		return false;
 	
-	var gaStep = owner.getStereotype('GaStep');
-	var servCount = owner.getValue(gaStep, 'servCount');
+	var gaStep = self.getStereotype('GaStep');
+	var servCount = self.getValue(gaStep, 'servCount');
 	
 	var i : Integer = 0;
 	if(servCount.isDefined() and servCount.size() == 0){
@@ -180,9 +178,10 @@ operation Component F_resDemand(th_maxOpResDemand : List( Real ), th_minResDeman
 operation Operation F_T(th_SthReq : Real) : Boolean{
 	
 	var listOfUseCases : List(UseCase) = self.getUseCases(); 
-	
 	var listOfUseCaseWithThroughputLessThanThreshold : List(UseCase) = new List(UseCase);
-
+	if(listOfUseCases.isEmpty()){
+		return false; //non ci sono use case legati all'operazione
+	}
 	for(useCase in listOfUseCases){
 		if(useCase.hasStereotype('GaScenario')){
 			var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
@@ -216,7 +215,10 @@ operation Operation F_maxHwUtil(th_maxHwUtil : Real) : Boolean{
 	var listOfProcessNode : List(Node) = new List(Node);
 	
 	listOfProcessNode = self.getProcessNodes();
-	
+
+	if(listOfProcessNode.isEmpty()){
+		return false; //non ci sono nodi con lo stereotipo giusto o la classe non è deployata
+	}	
 	var listOfProcessNodeWithUtilizationGreater : List(Node) = new List(Node);
 	
 	for(node in listOfProcessNode){

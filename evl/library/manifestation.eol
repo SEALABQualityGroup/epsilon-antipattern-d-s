@@ -4,3 +4,10 @@ operation Manifestation hasUtilizedElement(component : Component) : Boolean{
 	}
 	return false;
 }
+
+operation Manifestation hasUtilizedElement(classifier : Classifier) : Boolean{
+	if(self.getSuppliers()->exists(sup | sup == classifier)){
+		return true;
+	}
+	return false;
+}

@@ -1,13 +1,6 @@
 operation Message getReceiveLifeline() : Lifeline{
-	
 	var interaction = self.getOwner(); //interaction
-	"@@@@@@@@@@@@@@@".println();
-	interaction.println();
-	self.getReceiveEvent().println();
-	"@@@@@@@@@@@@@@@".println();
-	
 	var lifeline = interaction.getLifeline(self.getReceiveEvent());
-	
 	if(lifeline.isUndefined()){
 		"there was an error".println();
 		return null;

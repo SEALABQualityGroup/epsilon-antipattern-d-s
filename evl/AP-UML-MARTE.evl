@@ -68,9 +68,9 @@ context Operation {
 	critique PaF {
 		check {
 			if(self.F_probExec() and 
-					self.F_resDemand(th_maxResDemand) and
-						(self.F_T(th_SthReq) or not self.F_maxHwUtil(th_maxHwUtil) ) ){
-							return false;
+				self.F_resDemand(th_maxResDemand) and
+					(not self.F_T(th_SthReq) or not self.F_maxHwUtil(th_maxHwUtil) ) ){
+						return false;
 			}
 			return true;
 		}
@@ -80,14 +80,14 @@ context Operation {
 			do {
 				//FIX 1
 				//self.moveToNewComponentDeployedOnNewNode(); 
-				self.moveToNewClassDeployedOnNewNode(); 
+				self.moveToNewOwnerDeployedOnNewNode(); 
 			}
 		}
 		fix{
 			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
 				//FIX 2
-				if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
+				if(not self.moveToNewOwnerDeployedOnNearLessUsedNode())
 					"there was an error".println();
 			}
 		}
@@ -102,7 +102,7 @@ context Operation {
 			title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 			do{
 				//FIX 4
-				self.moveToLessCriticalComponent();
+				self.moveToLessCriticalOwner();
 			}
 		}
 		

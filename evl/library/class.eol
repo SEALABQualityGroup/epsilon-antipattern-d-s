@@ -1,17 +1,7 @@
 operation Class moveInterfacesRealizationFrom(class : Class, op : Operation) {
-	
-	var listOfUsedProvidedInterfaces : List(Interface) = class.getAllUsedIntefacesProvidedsBy(op);
-		
-	//sposto le interface realization delle interfacce della listOfUsedProvidedInterfaces 
-	//nel nuovo componente
-	var selfClassListOfInterfaceRealizations : List(Interface) = class.getInterfaceRealizations().asSequence();
-	
-	for(intRealization in selfClassListOfInterfaceRealizations){
-		for(interface in listOfUsedProvidedInterfaces){
-			if(interface == intRealization.getContract() ){
-				self.moveInterfaceRealizations(intRealization);
-			}
-		}
+	var listOfUsedProvidedInterfaces : List(Interface) = class.getInterfaceRealizations().asSequence();
+	for(intRealization in listOfUsedProvidedInterfaces){
+		self.createInterfaceRealization(intRealization.name, intRealization.getContract());
 	}
 }
 

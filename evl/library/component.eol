@@ -262,6 +262,8 @@ operation Component redeployOn(node : Node, from : Node){
 	node.getDeployments().add(deployment); //sposto l'artefatto dal nodo sorgente al nuovo nodo
 }
 
+
+
 operation Component getArtifactOn(node : Node) : Artifact{
 	var deploymentNode: Node; 
 	for (art in self.getAllArtifacts()){
@@ -318,7 +320,6 @@ operation Component addUsages(usages : Sequence(Usage)){
 		}
 	}
 }
-
 
 operation Component getDeploymentOn(node : Node, art : Artifact) : Deployment{
 	var returnValue = Deployment.allInstances->selectOne(
@@ -533,11 +534,8 @@ operation Component getRemoteMesIntoInteractions() : Map{
 	var selfInteractions = self.getInteractions();
 	for(int in selfInteractions){
 		var seqOfMes = int.getMessageOf(self);
-		int.println();
 		for(mes in seqOfMes){
 			if(not mes.isReturn()){
-				mes.getName().println();
-				mes.id.println();
 				var lf = mes.getReceiveLifeline(); //lifeline destinataria
 				var component = lf.getRepresents().getType(); //componente
 				if(component.isTypeOf(Component) and component.isRemote(self) ){ // i due componenti sono remoti

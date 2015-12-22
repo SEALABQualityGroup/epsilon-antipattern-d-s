@@ -36,7 +36,6 @@ operation Interaction removeLifelineOf(component : Component) {
 	self.getLifelines().remove(component.getLifeline(self));
 }
 
-
 operation Interaction getComponentLifeline(component : Component) : Lifeline{
 	for(lf in self.getLifelines){
 		var represents = lf.getRepresents();
@@ -44,6 +43,26 @@ operation Interaction getComponentLifeline(component : Component) : Lifeline{
 			if(property == represents)
 				return lf;
 	}
+}
+
+operation Interaction getClassLifeline(class : Class) : Lifeline{
+	self.println();
+	self.getLifelines().println();
+	
+	var lifelines = Lifeline.allInstances->select(lf | lf.getInteraction() == self);
+	
+	for(lf in lifelines){
+		if(lf.getRepresents().getType() == class)
+			return lf;
+	}
+	/*
+	for(lf in self.getLifelines()){
+		lf.println();
+		var represents = lf.getRepresents();
+		for(property in class.getAllInteractionProperties())
+			if(property == represents)
+				return lf;
+	}*/
 }
 
 operation Interaction getUseCase() : UseCase{

@@ -39,6 +39,25 @@ operation Node cloneDeployedArtifactFrom(node : Node, component : Component){
 	}
 }
 
+
+operation Node cloneDeployedArtifactFrom(node : Node, classfier : Classifier){
+	for(dep in node.getDeployedElements()){
+		
+		var newArtifact : Artifact = new Artifact; //creo l'artefatto
+		var newManifestation; //e' la manifestazione del componente
+		var newDeployment; //e' il deployment dell artefatto appena creato
+		
+		self.getNearestPackage().addElement(newArtifact); //aggiungo l'artefatto al package del nodo
+		newArtifact.name = classfier.name; //setto il nome dell'artefatto come il componente
+		
+		//creo la manifestazione del componente sull artefatto
+		newManifestation = newArtifact.createManifestation(classfier.name, classfier); 
+			
+		newDeployment = self.createDeployment(newArtifact.name); //creo il deploy sul nodo
+		newDeployment.getDeployedArtifacts().add(newArtifact); //aggiungo al deploy l'artefatto
+	}
+}
+
 //clone i collegamenti tra il nuovo nodo e i nodi collegati al nodo splittato
 operation Node cloneLink(listOfLinkedNode : List(Property), packageContainer : Package){
 	for(linkedNode in listOfLinkedNode){
@@ -73,6 +92,22 @@ operation Node clone(component : Component){
 		newNode.cloneDeployedArtifactFrom(self, component); //clono gli artefatti del nodo sorgente
 		newNode.cloneLink(listOfLinkedNode, packageContainer);
 }
+
+operation Node clone(class : Class) : Node{
+		var newNode : Node = new Node; //creo il nuovo nodo
+		var listOfLinkedNode = self.getDirectlyLinkedNode(); //recupero la lista dei link del nodo
+		var packageContainer : Package = self.getNearestPackage();  //recupero il package container
+		newNode.name = self.name+" Refactored";
+		packageContainer.addElement(newNode);
+
+		newNode.cloneAppliedStereotypesFrom(self); //clono gli stereotipi del nodo sorgente
+		newNode.cloneDeployedArtifactFrom(self, class); //clono gli artefatti del nodo sorgente
+		newNode.cloneLink(listOfLinkedNode, packageContainer);
+		
+		return newNode;
+}
+
+
 
 operation Node clone(component : Component, reduction : Integer){
 		var newNode : Node = new Node; //creo il nuovo nodo
@@ -127,7 +162,6 @@ operation Node getUtilization() : Real{
 					var listOfComponents = art.getManifestedComponents();
 					if(listOfComponents.isDefined() and not listOfComponents.isEmpty()){
 						for(com in listOfComponents){
-							com.println();
 							var utl = com.calculateUtilization();
 							if(not utl.isEmpty()){
 								utilization = utilization + utl.at(0).asReal() + utl.at(1).asReal();
@@ -209,7 +243,6 @@ operation Node hasLowUtilization() : Boolean {
 
 operation Node getCriticalDeployedComponent() : Component{
 	var artifacts = self.getArtifact();
-	artifacts.println();
 	var criticalComponent : Component;
 	var utilization : Real;
 	for(art in artifacts){

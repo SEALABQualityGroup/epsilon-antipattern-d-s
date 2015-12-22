@@ -73,15 +73,16 @@ operation Operation getProcessNodes() : List(Node){
 	var returnValue : List(Node) = new List(Node);
 	
 	for(node in Node.allInstances){
-		for(deployment in node.getDeployments()){
-			deployment.println();
-			var listOfArtifacts = deployment.getDeployedArtifacts();
-			for(art in listOfArtifacts){
+		if(node.hasStereotype("GaExecHost")){
+			for(deployment in node.getDeployments()){
+				var listOfArtifacts = deployment.getDeployedArtifacts();
+				for(art in listOfArtifacts){
 					if( art.hasRepresentationOf(self.getOwner()) ){
 						returnValue.add(node);
 					}
 				}
 			}
+		}
 	}
 	return returnValue;
 }
@@ -89,10 +90,9 @@ operation Operation getProcessNodes() : List(Node){
 //recupero gli UseCase relativi all'operazione
 operation Operation getUseCases() : List(UseCase){
 	var returnValue : List(UseCase) = new List(UseCase);
-	
 	for(interaction in Interaction.allInstances){
 		if( interaction.hasOperation(self) ){
-			returnValue.add(interaction.namespace);
+			returnValue.add(interaction.getOwner());
 		}
 	}
 	return returnValue;
@@ -125,10 +125,10 @@ operation Operation splitClass() : Class{
 	var splittedClass : Class = new Class(); //creo il componente splittato
 	selfPackage.addElement(splittedClass); //aggiungo il componente splittato al package del componente sorgente
 
-	splittedClass.name = self.getOwner().name + " Splitted";
-	splittedClass.cloneAppliedStereotypesFrom(splittedClass); //clono gli stessi stereotipi del componente sorgente
+	splittedClass.name = self.getOwner().name + " Refactored";
+	splittedClass.cloneAppliedStereotypesFrom(self.getOwner()); //clono gli stessi stereotipi del componente sorgente
 	
-	splittedClass.moveInterfacesRealizationFrom(splittedClass, self);
+	splittedClass.moveInterfacesRealizationFrom(self.getOwner(), self);
 	
 	var listOfUsedProvidedInterfaces : List(Interface) = splittedClass.getAllUsedIntefacesRequiredsBy(self); //TODO vedere il nuovo modello
 
@@ -138,9 +138,7 @@ operation Operation splitClass() : Class{
 //recupero tutti i message dell'operazione
 operation Operation getAllOwnMessages() : List(Message){
 	var returnValue : List(Message) = new List(Message);
-	
 	for(message in Message.allInstances){
-		
 		if(message.getSignature() == self){
 			returnValue.add(message);
 		}
@@ -206,9 +204,18 @@ operation Operation moveIntoComponent(component : Component){
 	component.moveOperation(self);
 }
 
+operation Operation moveIntoClass(class : Class){
+	var usages = self.getUsages()->select(usage : Usage | 
+		(usage.getSuppliers().size() == 1 and usage.getSuppliers()->first() == self) or 
+			(usage.getClients().size() == 1 and usage.getClients()->first() == self));
+			
+	class.addUsages(usages);
+	class.moveOperation(self);
+}
+
 operation Operation redeployOnNearLessUsedNode() : Boolean{
 
-	var listOfCriticSourceNode = self.PaF_F_maxHwUtil(); 
+	var listOfCriticSourceNode = self.getDeployedNodesHwUtilization(th_maxHwUtil); 
 	var listOfNearLessUsed : List(Node) = new List(Node);
 	
 	for(node in listOfCriticSourceNode){
@@ -237,7 +244,7 @@ operation Operation redeployOnNearLessUsedNode() : Boolean{
 		}
 		listOfNearLessUsed.add(lessNode);
 		if(listOfNearLessUsed.isUndefined() or listOfNearLessUsed.size() == 0) return false;
-		self.class.redeployOn(listOfNearLessUsed->first(), node);
+		self.getOwner().redeployOn(listOfNearLessUsed->first(), node);
 	}
 	//deploy il componente splittato sul primo nodo della lista dei vicini meno utilizzati
 	
@@ -280,7 +287,7 @@ operation Operation dynamicFixing(component : Component) {
 	sourceLifeline.removeInteractionFragment(bes.getFinish());
 }
 
-operation Operation dynamicFixingForClass(class : Class) {
+operation Operation dynamicFixing(class : Class) {
 	var interaction = self.getAllInteractions()->first(); //TODO controllare potrebbe lavorare su un interaction non corretto
 	var sourceLifeline = class.getLifeline(interaction);
 	var lifeline = interaction.createLifeline(self.class.name+"Lifeline"); //L2
@@ -437,6 +444,16 @@ operation Operation moveToNewComponentDeployedOnNewNode() : Boolean {
 	return true;
 }
 
+operation Operation moveToNewOwnerDeployedOnNewNode() : Boolean{
+
+	if(self.getOwner().isTypeOf(Class)){
+		self.moveToNewClassDeployedOnNewNode();
+	}else if(self.getOwner().isTypeOf(Component)){
+		self.moveToNewComponentDeployedOnNewNode();
+	}
+
+}
+
 operation Operation moveToNewClassDeployedOnNewNode() : Boolean {	
 	//static
 	var sourceClass : Class = self.getOwner();
@@ -447,7 +464,66 @@ operation Operation moveToNewClassDeployedOnNewNode() : Boolean {
 	splittedClass.moveOperation(self); //sposta l'operazione sul componente appena creato
 	
 	//dynamic
-	self.dynamicFixingForClass(sourceClass);
+	self.dynamicFixing(sourceClass);
+	
+	return true;
+}
+
+operation Operation moveToNewOwnerDeployedOnNearLessUsedNode() : Boolean{
+	if(self.getOwner().isTypeOf(Class)){
+		return self.moveToNewClassDeployedOnNearLessUsedNode();
+	}else if(self.getOwner().isTypeOf(Component)){
+		return self.moveToNewComponentDeployedOnNearLessUsedNode();
+	}
+}
+
+operation Operation moveToNewClassDeployedOnNearLessUsedNode() : Boolean {
+	//static
+	var sourceClass : Class = self.getOwner();
+	var splittedClass : Class = self.splitClass();
+	
+	//deploy
+	var listOfNearLessUsedNode = sourceClass.getNearLessUsedNodes();
+	
+	//lista dei nodi critici che manifestano il componente con l'op critica
+	var listOfCriticSourceNode = self.getDeployedNodesHwUtilization(th_maxHwUtil); 
+	var listOfNearLessUsed : List(Node) = new List(Node);
+		
+	splittedClass.moveOperation(self);
+		
+	for(node in listOfCriticSourceNode){
+		var listOfNeighbours = node.getDirectlyLinkedNode(); //lista dei nodi vicini
+		if(listOfNeighbours.isUndefined() or listOfNeighbours.size() == 0){
+			//non esistono vicini al nodo
+			return false;
+			//break;
+		}
+		
+		var lessNode : Node = listOfNeighbours->selectOne(
+			node : Node | node.hasStereotype("GaExecHost") and
+				node.getValue(node.getStereotype("GaExecHost"), "utilization").isDefined()
+		);
+		
+		if(lessNode.isUndefined()) return false;
+		var utilization : Real = lessNode.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first().asReal();
+		
+		for(neighbour in listOfNeighbours){
+			if(neighbour.hasStereotype("GaExecHost")){
+				var nearNodeUtilization = neighbour.getValue(lessNode.getStereotype("GaExecHost"), "utilization")->first();
+				if(nearNodeUtilization.isDefined() and nearNodeUtilization.asReal() < utilization){
+					lessNode = nearNode;	
+					utilization = nearNodeUtilization;
+				}
+			}
+		}
+		listOfNearLessUsed.add(lessNode);
+	}
+	//deploy il componente splittato sul primo nodo della lista dei vicini meno utilizzati
+	if(listOfNearLessUsed.isUndefined() or listOfNearLessUsed.size() == 0) return false;
+	splittedClass.deployOn(listOfNearLessUsed->first());
+	
+	//dynamic
+	self.dynamicFixing(sourceClass);
 	
 	return true;
 }
@@ -499,7 +575,7 @@ operation Operation moveToNewComponentDeployedOnNearLessUsedNode() : Boolean {
 	splittedComponent.deployOn(listOfNearLessUsed->first());
 	
 	//dynamic
-	self.dynamicFixing(splittedComponent);
+	self.dynamicFixing(sourceComponent);
 	
 	return true;
 }
@@ -512,6 +588,14 @@ operation Operation redeployOnNearLessUsedNode() : Boolean {
 	return self.redeployOnNearLessUsedNode();
 }
 
+operation Operation moveToLessCriticalOwner() : Boolean{
+	if(self.getOwner().isTypeOf(Class)){
+		return self.moveToLessCriticalClass();
+	}else if(self.getOwner().isTypeOf(Component)){
+		return self.moveToLessCriticalComponent();
+	}
+	return false;
+}
 
 operation Operation moveToLessCriticalComponent() : Boolean{
 	var lessUsedComponent : Component = Component.allInstances->first();
@@ -552,4 +636,68 @@ operation Operation moveToLessCriticalComponent() : Boolean{
 	sourceLifeline.removeCovered(message.getReceiveEvent());
 	//sourceLifeline.removeCovered(sourceBES);
 	sourceLifeline.removeCovered(sourceBES.getFinish());
+}
+
+operation Operation moveToLessCriticalClass() : Boolean{
+	var lessUsedClass : Class = Class.allInstances->first();
+	var sourceClass : Class = self.getOwner();
+	
+	for(class in Class.allInstances){
+		if( class.calculateUtilization() < lessUsedClass.calculateUtilization() ){
+			lessUsedClass = class;
+		}
+	}
+	
+	if(lessUsedClass <> self.getOwner()){
+		self.moveIntoClass(lessUsedClass);
+	}
+	
+	//dynamic
+	var listOfLifeline = sourceClass.getLifelines();
+	var interaction = listOfLifeline->first().getInteraction();
+	var sourceLifeline = interaction.getClassLifeline(sourceClass);
+	
+	var lifeline = lessUsedClass.createLifelineInto(interaction);
+	
+	var message = self.getMessageIn(interaction);
+	var indexOfMesMOS_R : Integer = interaction.getIndexOf(message.getReceiveEvent());
+	
+	var besL2 : BehaviorExecutionSpecification = new BehaviorExecutionSpecification;
+	interaction.addFragmentAt(besL2,indexOfMesMOS_R+1);
+	
+	message.getReceiveEvent().println();
+	
+	message.getReceiveEvent().println();
+	sourceLifeline.println();
+	var sourceBES = sourceLifeline.getBESStartedBy(message.getReceiveEvent());
+	besL2.start = self.getMessageIn(interaction).getReceiveEvent();
+	besL2.finish = sourceBES.getFinish();
+	
+	lifeline.getCoveredBys().add(message.getReceiveEvent());
+	lifeline.getCoveredBys().add(besL2);
+	lifeline.getCoveredBys().add(sourceBES.getFinish());
+	
+	sourceLifeline.removeCovered(message.getReceiveEvent());
+	//sourceLifeline.removeCovered(sourceBES);
+	sourceLifeline.removeCovered(sourceBES.getFinish());
+}
+
+operation Operation getDeployedNodesHwUtilization(th_maxHwUtil : Real) : List(Node){
+	
+	var listOfProcessNode : List(Node) = new List(Node);
+	
+	listOfProcessNode = self.getProcessNodes();
+	
+	var listOfProcessNodeWithUtilizationGreater : List(Node) = new List(Node);
+	
+	for(node in listOfProcessNode){
+		if(node.hasStereotype('GaExecHost') ){
+			var utilization = node.getValue(node.getStereotype('GaExecHost'), 'utilization')->first();
+	 		if( utilization.isDefined() and utilization.asReal() >= th_maxHwUtil ){
+				listOfProcessNodeWithUtilizationGreater.add(node);
+			}
+		}
+	}
+	
+	return listOfProcessNodeWithUtilizationGreater;
 }

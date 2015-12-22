@@ -1,7 +1,7 @@
 //verifico se l'artifact rappresenta il componente passato per parametro
 operation Artifact hasRepresentationOf(classifier : Classifier) : Boolean {
-	for(manifestation in self.manifestation){
-		if(manifestation.utilizedElement == classifier){
+	for(manifestation in self.getManifestations()){
+		if(manifestation.getSuppliers()->exists(sup | sup == classifier)){
 			return true;
 		}
 	}
