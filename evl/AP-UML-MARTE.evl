@@ -26,7 +26,7 @@ import "library/message.eol";
 pre {
 	/******** DESIGN **************/
 	var th_maxMsgs : Integer = 3;
-	var th_maxRemMsgs : Integer = 3;
+	var th_maxRemMsgs : Integer = 2;
 	var th_maxRemInst : Integer = 1; 
 	var th_maxConnects : Integer = 4;
 	var th_maxExF : Integer = 2;
@@ -263,6 +263,25 @@ context Component {
  		check{
  			if(self.F_numRemMsgs(th_maxRemMsgs) and 
  				(self.F_maxNetUtil(th_minNetUtil) or self.F_numRemInst(th_maxRemInst))
+ 			)
+ 				return false;
+ 			return true;
+ 		}
+ 		message : 'EST <' + self.type.name + '> ' + self.name
+ 		fix {
+			title : "Apply Session Facade Pattern"
+			do {
+				self.applySessionFacade();
+			}
+		}
+ 	}
+}
+
+ context Class {
+ 	critique EmptySemiTruck{
+ 		check{
+ 			if(self.F_numRemMsgs(th_maxRemMsgs) and 
+ 				(not self.F_maxNetUtil(th_minNetUtil) or self.F_numRemInst(th_maxRemInst))
  			)
  				return false;
  			return true;

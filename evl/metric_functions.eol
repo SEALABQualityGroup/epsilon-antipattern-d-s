@@ -81,7 +81,20 @@ operation Component F_numRemMsgs(th_maxRemMsgs : Integer) : Boolean{
 	return false;
 }
 
+operation Classifier F_numRemMsgs(th_maxRemMsgs : Integer) : Boolean{
+	if(self.countRemoteMessages(th_maxRemMsgs))
+		return true;
+		
+	return false;
+}
+
 operation Component F_numRemInst(th_maxRemInst : Integer) : Boolean{
+	if(self.countRemoteInstances(th_maxRemInst))
+		return true;
+	return false;
+}
+
+operation Classifier F_numRemInst(th_maxRemInst : Integer) : Boolean{
 	if(self.countRemoteInstances(th_maxRemInst))
 		return true;
 	return false;
@@ -284,6 +297,12 @@ operation Node F_maxQL(th_maxQL : Integer) : Boolean {
 }
 
 operation Component F_maxNetUtil(th_maxNetUtil : Real) : Boolean{
+	if(not self.getNodesWithNetworkUsageGreaterThan(th_maxNetUtil).isEmpty())
+		return true;
+	return false;
+}
+
+operation Classifier F_maxNetUtil(th_maxNetUtil : Real) : Boolean{
 	if(not self.getNodesWithNetworkUsageGreaterThan(th_maxNetUtil).isEmpty())
 		return true;
 	return false;
