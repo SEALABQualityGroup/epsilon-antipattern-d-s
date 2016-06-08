@@ -1,0 +1,4 @@
+operation CombinedFragment createOperand() : InteractionOperand{
+	var interactionOperand = self.createOperand(self.getName()+"_Operand");
+	return interactionOperand;
+}

@@ -1,4 +1,4 @@
-/*operation Operation F_resDemandGreaterOrEqualThan( th_maxResDemand : List(Real) ) : Boolean{
+operation Operation F_resDemandGreaterOrEqualThan( th_maxResDemand : List(Real) ) : Boolean{
 	
 	var turnback : Boolean = true;
 	
@@ -40,7 +40,7 @@ operation Operation F_resDemandLesserThan( th_minResDemand : List(Real) ) : Bool
 	}
 	return turnback;	
 }
-*/
+
 
 //clone una operation
 operation Operation cloneOperationInto(component : Component) : Operation{
@@ -75,6 +75,25 @@ operation Operation getProcessNodes() : List(Node){
 	
 	for(node in Node.allInstances){
 		if(node.hasStereotype("GaExecHost")){
+			for(deployment in node.getDeployments()){
+				var listOfArtifacts = deployment.getDeployedArtifacts();
+				for(art in listOfArtifacts){
+					if( art.hasRepresentationOf(self.getOwner()) ){
+						returnValue.add(node);
+					}
+				}
+			}
+		}
+	}
+	return returnValue;
+}
+
+//recupero la lista dei process node che hanno un legame con l'operazione
+operation Operation getProcessNodes(stereotype : String) : List(Node){
+	var returnValue : List(Node) = new List(Node);
+	
+	for(node in Node.allInstances){
+		if(node.hasStereotype(stereotype)){
 			for(deployment in node.getDeployments()){
 				var listOfArtifacts = deployment.getDeployedArtifacts();
 				for(art in listOfArtifacts){
@@ -213,6 +232,7 @@ operation Operation moveIntoClass(class : Class){
 	class.addUsages(usages);
 	class.moveOperation(self);
 }
+
 
 operation Operation redeployOnNearLessUsedNode() : Boolean{
 
@@ -701,4 +721,55 @@ operation Operation getDeployedNodesHwUtilization(th_maxHwUtil : Real) : List(No
 	}
 	
 	return listOfProcessNodeWithUtilizationGreater;
+}
+
+
+//Fixing decomposition
+operation Operation decomposition(){
+	var owner = self.getOwner();
+	
+	var indices;
+	
+	var listOfInteraction = self.getAllInteractions();
+	//check di controllo
+	if(listOfInteraction.isEmpty()){
+		"there was an error!!!".errln();
+		return null;
+	}
+	
+	var new_op := owner.createNewOperation(self);
+	
+	var mos = new MessageOccurrenceSpecification();
+
+	for(interaction in listOfInteraction){
+		indices = interaction.getIndexOf(self);
+		var message_new_op = interaction.createMessage("new_"+new_op.getName());
+		message_new_op.setSignature(new_op);
+		for(index in indices){
+			var loopFragment = interaction.createLoopFragmentAt(index);
+			var loopFragmentOperand = loopFragment.getOperands()->first();
+			
+			var sendEvent = new MessageOccurrenceSpecification();
+			sendEvent.setName("MOS_SendEvent_"+message_new_op.getName());
+			loopFragmentOperand.getFragments().add(sendEvent);
+			var receiveEvent = new MessageOccurrenceSpecification();
+			receiveEvent.setName("MOS_ReceiveEvent_"+message_new_op.getName());
+			loopFragmentOperand.getFragments().add(receiveEvent);
+			
+			message_new_op.setSendEvent(sendEvent);
+			message_new_op.setReceiveEvent(receiveEvent);
+			
+			var ownerLifeline = owner.getLifeline(interaction);
+			if(ownerLifeline.isUndefined()){
+				"there was an error!!!".println();
+				return 0;
+			}
+			ownerLifeline.getCoveredBys().add(sendEvent);			
+			ownerLifeline.getCoveredBys().add(receiveEvent);			
+		}
+	}
+	if(not owner.deleteOperation(self)){
+		"[[ Method: deleteOperation(Operation) in operation.eol ]] ".errln("There was an error!!! ");
+		return 0;
+	}
 }

@@ -1,4 +1,4 @@
-//clone le operazioni del componente componente
+	//clone le operazioni del componente componente
 operation Component cloneOwnedOperationFrom(componentSource : Component){
 	for(op in componentSource.ownedOperation){
 		op.cloneOperationInto(self);
@@ -133,12 +133,25 @@ operation Component getAllInteractionProperties() : List(Property){
 	return returnValue;
 }
 
+/*
 operation Component getLifeline(interaction : Interaction) : Lifeline{
 	for(lf in interaction.getLifelines()){
 		if(lf.represents.type == self){
 			return lf; //L1
 		}	
 	}
+}
+*/
+
+operation Component getLifeline(interaction : Interaction) : Lifeline{
+	for(lf in Lifeline.allInstances){
+		if(lf.getOwner() == interaction){ 
+			if(lf.getRepresents().getType() == self){
+				return lf; //L1
+			}
+		}	
+	}
+	return null;
 }
 
 operation Component getManifestations() : List(Manifestation){
@@ -795,4 +808,31 @@ operation Component reduceNumberOfClientConnects() : Boolean{
 			self.moveInto(opOfUsedInt);
 		}
 	}
+}
+
+operation Component createNewInterfaceRealization() :InterfaceRealization{
+	var newInt : InterfaceRealization = new  InterfaceRealization();
+	var selfPackage = self.getNearestPackage();
+	
+	selfPackage.addElement(newInt);	
+	self.getInterfaceRealization().add(newInt);
+	return newInt;
+}
+
+operation Component createNewOperation(op : Operation) : Operation{
+	var newOperation = self.createOwnedOperation("operation_decomposition", null,null);
+	newOperation.cloneAppliedStereotypesFrom(op);
+	newOperation.cloneReturnTypeFrom(op);
+	var interface_op_new = self.createInterfaceRealization("Interface_for_"+newOperation.getName(), null); 
+	
+	return newOperation;
+}
+
+operation Component deleteOperation(op : Operation) : Boolean{
+	if(not self.getOperations()->exists(o | o == op)){
+		"there was an error!!!".errln("[[ Method: deleteOperation(Operation) in component.eol ]]");
+		return false;
+	}
+	op.destroy();
+	return true;
 }

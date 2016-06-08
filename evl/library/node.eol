@@ -179,6 +179,10 @@ operation Node getNeighboursWithLowUtilization() : Sequence(Node){
 	var returnValue : Sequence(Node) = new Sequence(Node);
 	
 	var lanNode = self.getLinkedNetworkNode()->first();
+	if(lanNode.isUndefined()){
+		"there was an error!!".println();
+		return null;
+	}
 	var comPaths = lanNode.getCommunicationPaths();
 	
 	for (cp in comPaths){
@@ -329,4 +333,3 @@ operation Node redeployOnNearLessUsedNode() {
 operation Node moveToLessCriticalComponent(){
 	self.getCriticalDeployedComponent().getCriticalOperation().redeployOnNearLessUsedNode();
 }
-

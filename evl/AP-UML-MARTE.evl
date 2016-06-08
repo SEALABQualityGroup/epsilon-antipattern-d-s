@@ -10,6 +10,8 @@ import "library/component.eol";
 
 import "library/operation.eol";
 import "library/interaction.eol";
+import "library/interactionFragment.eol";
+import "library/interactionOperand.eol";
 import "library/artifact.eol";
 import "library/manifestation.eol";
 import "library/node.eol";
@@ -54,7 +56,7 @@ pre {
 	var th_SrtReq : Real = 15; //response time
 	
 	var th_SthReq = 0.9; //throughput
-	var th_maxQL : Integer = 16; //queue lenght
+	var th_maxQL : Integer = 130; //queue lenght
 }
 
 /*********************************************************************************************
@@ -64,7 +66,7 @@ pre {
  *																							 *
  *********************************************************************************************/
 
-context Operation {
+/*context Message {
 	critique PaF {
 		check {
 			if(self.F_probExec() and 
@@ -107,6 +109,53 @@ context Operation {
 		}
 		
 	}
+}*/
+
+context Operation {
+	critique PaF {
+		check: 
+			not (self.F_probExec() and 
+				self.F_resDemand(th_maxResDemand) and
+					(not self.F_T(th_SthReq) or not self.F_maxHwUtil(th_maxHwUtil) ))	
+		message : 'PaF <Operation> ' + self.name
+		fix {
+			title : "Move it to a new Component deployed to a new Node"
+			do {
+				//FIX 1
+				//self.moveToNewComponentDeployedOnNewNode(); 
+				self.moveToNewOwnerDeployedOnNewNode(); 
+			}
+		}
+		fix{
+			title : "Move it to a new Component deployed to the less used neighbour Node"
+			do{
+				//FIX 2
+				if(not self.moveToNewOwnerDeployedOnNearLessUsedNode())
+					"there was an error".println();
+			}
+		}
+		fix{
+			title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
+			do{
+				//FIX 3
+				self.redeployOnNearLessUsedNode();
+			}
+		}
+		fix{
+			title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
+			do{
+				//FIX 4
+				self.moveToLessCriticalOwner();
+			}
+		}
+		fix{
+			title: "Decomposition"
+			do{
+				//FIX Decomposition
+				self.decomposition();
+			}
+		}
+	}
 }
 
 
@@ -119,11 +168,8 @@ context Operation {
  
 context Node {
 	critique CPS {
-		check {
-			if(self.F_maxQL(th_maxQL) and self.F_maxHwUtil(th_maxHwUtil))
-				return false;
-			return true;
-		}
+		check: 
+			not ( self.F_maxQL(th_maxQL) and self.F_maxHwUtil(th_maxHwUtil) )
 		message : 'CPS <' + self.type.name + '> ' + self.name
 		fix {
 			title : "Move it to a new Component deployed to a new Node"
@@ -165,13 +211,10 @@ context Node {
  *********************************************************************************************/
  context Component {
  	critique ExtensiveProcessingAP{
- 		check{
- 			if(self.F_resDemand(th_maxResDemand, th_minResDemand) and 
- 				self.F_probExec() and 
- 				( self.F_maxHwUtil(th_maxHwUtil)) or self.F_RT(th_SrtReq) )
- 				return false;
- 			return true;
- 		}
+ 		check:
+ 			not (self.F_resDemand(th_maxResDemand, th_minResDemand) and 
+ 					self.F_probExec() and 
+ 						( self.F_maxHwUtil(th_maxHwUtil)) or self.F_RT(th_SrtReq) )
  		message : 'EP <' + self.type.name + '> ' + self.name
  		fix {
 			title : "Move it to a new Component deployed to a new Node"
@@ -210,7 +253,9 @@ context Node {
  *								Blob Controller & Container									 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
+
+//NB numClientConnects stampa nome il nome del componente e una sequenza ma non capisco dove
  
 context Component {
 	critique Blob_Controller {
@@ -257,7 +302,7 @@ context Component {
  *	 								Empty Semi Truck										 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  context Component {
  	critique EmptySemiTruck{
  		check{
@@ -300,7 +345,7 @@ context Component {
  *	 								Tower of Babel											 *
  *							Antipattern Detection and Validation							 *
  *																							 *
- *********************************************************************************************/
+ *********************************************************************************************
  context Component {
  	critique TowerOfBabel{
  		check{

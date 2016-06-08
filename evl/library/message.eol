@@ -9,9 +9,14 @@ operation Message getReceiveLifeline() : Lifeline{
 	return lifeline;
 }
 
-
 operation Message isReturn() : Boolean{
 	if( self.getMessageSort().asString().equals("reply") )
 		return true;
 	return false;
+}
+
+operation Message getUseCase() : UseCase{
+	var returnValue;
+	returnValue = self.getInteraction().getUseCase();
+	return returnValue;
 }

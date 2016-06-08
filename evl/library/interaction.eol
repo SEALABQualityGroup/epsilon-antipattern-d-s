@@ -17,9 +17,19 @@ operation Interaction hasComponent(component : Component) : Boolean {
 }
 
 operation Interaction getIndexOf(fragment : InteractionFragment) : Integer{
-
 	var indexOf : Integer = self.getFragments()->indexOf(fragment);
 	return indexOf;
+}
+
+operation Interaction getIndexOf(op : Operation) : List(Integer){
+	var returnValue : List(Integer) = new List(Integer);
+	for (mes in self.getMessages()) { 
+		
+		if( mes.getSignature() == op ){
+			returnValue.add(self.getIndexOf(mes.getSendEvent()));
+		}
+	}
+	return returnValue;
 }
 
 operation InteractionOperand getIndexOf(fragment : InteractionFragment) : Integer{
@@ -54,11 +64,11 @@ operation Interaction getComponentLifeline(component : Component) : Lifeline{
 			if(property == represents)
 				return lf;
 	}
+	return null;
 }
 
 operation Interaction getClassLifeline(class : Class) : Lifeline{
 	var lifelines = Lifeline.allInstances->select(lf | lf.getInteraction() == self);
-	
 	for(lf in lifelines){
 		if(lf.getRepresents().getType() == class)
 			return lf;
@@ -74,7 +84,14 @@ operation Interaction getUseCase() : UseCase{
 operation Interaction getMessageOf(component : Component) : Sequence(Message){
 	var returnValue : Sequence(Message) = new Sequence(Message);
 	var componentLf = self.getComponentLifeline(component);
+	
+	if(componentLf.isUndefined()){
+		"there was an error!!!".println();
+		return null;
+	}
+	
 	for (mes in self.getMessages()) { 
+		
 		if( componentLf.getCoveredBys()->exists(iterator | iterator == mes.getSendEvent()) ){
 			returnValue.add(mes);
 		}
@@ -111,3 +128,14 @@ operation Interaction createLifelineOf(component : Component) : Lifeline {
 	lifeline.setRepresents(componentRepresents);
 	return lifeline;
 }
+
+operation Interaction createLoopFragmentAt(index : Integer) : CombinedFragment{
+	var loopFragment : CombinedFragment = new CombinedFragment();
+	self.addFragmentAt(loopFragment, index);
+	loopFragment.setName("LoopFragment_Decomposition");
+	//loopFragment.setInteractionOperand(Native("InteractionOperatorKind").LOOP);
+	var operand = loopFragment.createOperand(loopFragment.getName()+"_Operand");
+	var guard = operand.createGuard(operand.getName()+"_Guard");
+	return loopFragment;
+}
+

@@ -17,12 +17,11 @@ operation Class getAllUsedIntefacesRequiredsBy( op : Operation ) : List(Interfac
 	}
 	return returnValue;
 }
-operation Class getRequireds(){
-	self.name.println();
-	self.getUsedInterfaces().println(); //relazione di usage
+
+/*operation Class getRequireds(){
 	
 	return null;
-}
+}*/
 
 operation Class applySessionFacade() : Boolean{
 	
