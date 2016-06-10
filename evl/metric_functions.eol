@@ -258,6 +258,20 @@ operation Message F_T() : Boolean{
 	return false;
 }
 
+operation Message F_T() : Real{
+	var th_SthReq = 0.9; //throughput
+	var useCase : UseCase = self.getUseCase(); 
+	
+	if(useCase.hasStereotype('GaScenario')){
+		var throughput = useCase.getValue(useCase.getStereotype('GaScenario'), "throughput")->first();
+		if(throughput.isDefined() ){
+			return throughput.asReal();	
+		}
+	}
+	
+	return 0;
+}
+
 operation Operation F_T() : Boolean{
 	var th_SthReq = 0.9; //throughput
 	var listOfUseCases : List(UseCase) = self.getUseCases(); 

@@ -121,37 +121,30 @@ context Operation {
 		fix {
 			title : "Move it to a new Component deployed to a new Node"
 			do {
-				//FIX 1
-				//self.moveToNewComponentDeployedOnNewNode(); 
 				self.moveToNewOwnerDeployedOnNewNode(); 
 			}
 		}
 		fix{
 			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
-				//FIX 2
-				if(not self.moveToNewOwnerDeployedOnNearLessUsedNode())
-					"there was an error".println();
+				self.moveToNewOwnerDeployedOnNearLessUsedNode();
 			}
 		}
 		fix{
 			title : "Redeploy its owning Component "+self.class.name+" to the less used neighbour Node"
 			do{
-				//FIX 3
 				self.redeployOnNearLessUsedNode();
 			}
 		}
 		fix{
 			title : "Change its owning Component from "+self.class.name+" to the one with the lowest demand"
 			do{
-				//FIX 4
 				self.moveToLessCriticalOwner();
 			}
 		}
 		fix{
 			title: "Decomposition"
 			do{
-				//FIX Decomposition
 				self.decomposition();
 			}
 		}
@@ -226,22 +219,18 @@ context Node {
 		fix{
 			title : "Move it to a new Component deployed to the less used neighbour Node"
 			do{
-				//FIXING 2
-				if(not self.moveToNewComponentDeployedOnNearLessUsedNode())
-					"there was an error".println();
+				self.moveToNewComponentDeployedOnNearLessUsedNode();
 			}
 		}
 		fix{
 			title : "Redeploy its owning Component "+self.name+" to the less used neighbour Node"
 			do{
-				//FIXING 3
 				self.redeployOnNearLessUsedNode();
 			}
 		}
 		fix{
 			title : "Change its owning Component from "+self.name+" to the one with the lowest demand"
 			do{
-				//FIXING 4
 				self.moveToLessCriticalComponent();
 			}
 		}
